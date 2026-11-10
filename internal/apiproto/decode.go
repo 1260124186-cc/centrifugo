@@ -22,5 +22,6 @@ type RequestDecoder interface {
 	DecodeMapReadStream([]byte) (*MapReadStreamRequest, error)
 	DecodeMapStats([]byte) (*MapStatsRequest, error)
 	DecodeMapClear([]byte) (*MapClearRequest, error)
+	DecodeMapReconcile([]byte) (*MapReconcileRequest, error)
 	DecodeSharedPollPublish([]byte) (*SharedPollPublishRequest, error)
 }

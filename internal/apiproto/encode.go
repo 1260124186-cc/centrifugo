@@ -21,5 +21,6 @@ type ResultEncoder interface {
 	EncodeMapReadStream(*MapReadStreamResult) ([]byte, error)
 	EncodeMapStats(*MapStatsResult) ([]byte, error)
 	EncodeMapClear(*MapClearResult) ([]byte, error)
+	EncodeMapReconcile(*MapReconcileResult) ([]byte, error)
 	EncodeSharedPollPublish(*SharedPollPublishResult) ([]byte, error)
 }

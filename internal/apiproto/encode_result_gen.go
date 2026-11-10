@@ -109,6 +109,11 @@ func (e *JSONResultEncoder) EncodeMapClear(res *MapClearResult) ([]byte, error) 
 	return json.Marshal(res)
 }
 
+// EncodeMapReconcile ...
+func (e *JSONResultEncoder) EncodeMapReconcile(res *MapReconcileResult) ([]byte, error) {
+	return json.Marshal(res)
+}
+
 // EncodeSharedPollPublish ...
 func (e *JSONResultEncoder) EncodeSharedPollPublish(res *SharedPollPublishResult) ([]byte, error) {
 	return json.Marshal(res)

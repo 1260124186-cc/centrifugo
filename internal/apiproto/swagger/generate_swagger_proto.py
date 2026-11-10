@@ -78,6 +78,7 @@ OPERATIONS = {
     "MapReadStream": ("map", "Read the stream of a map channel"),
     "MapStats": ("map", "Stats for a map channel"),
     "MapClear": ("map", "Clear a map channel"),
+    "MapReconcile": ("map", "Reconcile a map channel with a complete managed entry manifest"),
     "SharedPollPublish": ("shared poll", "Publish into a shared poll channel"),
 }
 

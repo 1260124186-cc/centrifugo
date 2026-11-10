@@ -144,6 +144,10 @@ func (h *Executor) processCmd(ctx context.Context, cmd *Command, i int, replies 
 		method = "map_clear"
 		res := h.MapClear(ctx, cmd.MapClear)
 		replies[i].MapClear, replies[i].Error = res.Result, res.Error
+	} else if cmd.MapReconcile != nil {
+		method = "map_reconcile"
+		res := h.MapReconcile(ctx, cmd.MapReconcile)
+		replies[i].MapReconcile, replies[i].Error = res.Result, res.Error
 	} else if cmd.SharedPollPublish != nil {
 		method = "shared_poll_publish"
 		res := h.SharedPollPublish(ctx, cmd.SharedPollPublish)

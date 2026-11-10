@@ -380,6 +380,25 @@ func (s *grpcAPIService) MapClear(ctx context.Context, req *MapClearRequest) (*M
 	return resp, nil
 }
 
+// MapReconcile ...
+func (s *grpcAPIService) MapReconcile(ctx context.Context, req *MapReconcileRequest) (*MapReconcileResponse, error) {
+	resp := s.api.MapReconcile(ctx, req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+	if resp.Error != nil && s.useTransportErrorMode(ctx) {
+		metrics.IncAPIError(s.api.config.Protocol, "map_reconcile", resp.Error.Code)
+		statusCode := MapErrorToGRPCCode(resp.Error)
+		transportError, _ := status.New(statusCode, resp.Error.Message).WithDetails(resp.Error)
+		return nil, transportError.Err()
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "map_reconcile", resp.Error.Code)
+	}
+	return resp, nil
+}
+
 // SharedPollPublish ...
 func (s *grpcAPIService) SharedPollPublish(ctx context.Context, req *SharedPollPublishRequest) (*SharedPollPublishResponse, error) {
 	resp := s.api.SharedPollPublish(ctx, req)

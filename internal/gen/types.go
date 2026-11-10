@@ -21,5 +21,6 @@ var Requests = []string{
 	"MapReadStream",
 	"MapStats",
 	"MapClear",
+	"MapReconcile",
 	"SharedPollPublish",
 }

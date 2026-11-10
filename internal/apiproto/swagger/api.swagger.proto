@@ -491,6 +491,16 @@ service CentrifugoApi {
       tags: ["map"];
     };
   }
+  rpc MapReconcile (MapReconcileRequest) returns (MapReconcileResponse) {
+    option (google.api.http) = {
+      post: "/map_reconcile",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reconcile a map channel with a complete managed entry manifest";
+      tags: ["map"];
+    };
+  }
   rpc SharedPollPublish (SharedPollPublishRequest) returns (SharedPollPublishResponse) {
     option (google.api.http) = {
       post: "/shared_poll_publish",
@@ -604,6 +614,8 @@ message Command {
     MapStatsRequest map_stats = 40;
     // map_clear is a map clear command, see MapClearRequest.
     MapClearRequest map_clear = 41;
+    // map_reconcile is a map reconcile command, see MapReconcileRequest.
+    MapReconcileRequest map_reconcile = 43;
     // shared_poll_publish is a shared poll publish command, see
     // SharedPollPublishRequest.
     SharedPollPublishRequest shared_poll_publish = 42;
@@ -731,6 +743,8 @@ message Reply {
     MapStatsResult map_stats = 40;
     // map_clear is the result of a map clear command.
     MapClearResult map_clear = 41;
+    // map_reconcile is the result of a map reconcile command.
+    MapReconcileResult map_reconcile = 43;
     // shared_poll_publish is the result of a shared poll publish command.
     SharedPollPublishResult shared_poll_publish = 42;
 }
@@ -2466,6 +2480,79 @@ message MapClearResponse {
 
 // MapClearResult is the result of a map clear call. Empty at the moment.
 message MapClearResult {}
+
+// MapReconcileEntry is one desired entry of a MapReconcileRequest.
+message MapReconcileEntry {
+    // key is the entry key. Required, and must be unique within a single
+    // MapReconcileRequest.
+    string key = 1;
+    // data is the entry data. In the HTTP API it is any JSON value; over
+    // GRPC it may be binary.
+    bytes data = 2;
+    // b64data is data as base64, for binary payloads over the HTTP API.
+    // Centrifugo decodes it; when set it takes precedence over data.
+    string b64data = 3;
+}
+
+// MapReconcileRequest applies the complete desired entry set of a map
+// channel for one manifest. Entries missing from the channel are created,
+// entries whose data changed are updated, and entries previously managed by
+// the same manifest but absent from this request are deleted. Entries
+// written manually or by another system (that is, entries not carrying this
+// manifest's ownership marker) are never modified or deleted; a desired key
+// colliding with such an entry makes the whole call fail with a conflict
+// error before anything is written.
+//
+// The call is safe to retry and resumable: every entry is tagged with the
+// request's idempotency_key as ownership marker, and each underlying
+// publication or removal gets a deterministic per-entry idempotency key.
+// Re-submitting the same request after an interruption only applies the
+// still-missing part, and the final state equals the submitted manifest.
+// The idempotency_key therefore identifies the manifest (not a single HTTP
+// attempt) and must stay the same across resubmissions of this manifest.
+message MapReconcileRequest {
+    // channel is the name of the map channel. Required.
+    string channel = 1;
+    // idempotency_key identifies the manifest within the channel. Required.
+    // It is stored as the ownership marker on every entry this call manages
+    // and scopes which absent entries may be deleted on later submissions.
+    // Reuse the same value when re-submitting the same manifest, including
+    // retries after a process interruption.
+    string idempotency_key = 2;
+    // entries is the complete desired entry set of the manifest. An empty
+    // list removes all entries currently owned by this manifest and touches
+    // nothing else.
+    repeated MapReconcileEntry entries = 3;
+}
+
+// MapReconcileResponse is the response to a MapReconcileRequest.
+message MapReconcileResponse {
+    // error is set if the call failed.
+    Error error = 1;
+    // result is set on success.
+    MapReconcileResult result = 2;
+}
+
+// MapReconcileResult is the result of a map reconcile call. The counters
+// describe what this application changed; an unchanged resubmission reports
+// all zeros except unchanged.
+message MapReconcileResult {
+    // created is the number of entries that did not exist and were created.
+    uint32 created = 1;
+    // updated is the number of existing owned entries whose data changed.
+    uint32 updated = 2;
+    // deleted is the number of entries owned by this manifest that were
+    // absent from the submitted manifest.
+    uint32 deleted = 3;
+    // unchanged is the number of submitted entries already matching the
+    // current state.
+    uint32 unchanged = 4;
+    // offset is the stream position after the last applied operation, zero
+    // when nothing changed or the channel does not maintain a stream.
+    uint64 offset = 5;
+    // epoch is the epoch of the channel stream.
+    string epoch = 6;
+}
 
 // SharedPollPublishRequest pushes data for a key directly to clients of a
 // shared poll channel, without waiting for the next poll cycle. Requires

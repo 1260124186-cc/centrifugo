@@ -60,6 +60,7 @@ func (s *Handler) Routes() map[string]http.HandlerFunc {
 		"/map_read_stream":     s.handleMapReadStream,
 		"/map_stats":           s.handleMapStats,
 		"/map_clear":           s.handleMapClear,
+		"/map_reconcile":       s.handleMapReconcile,
 		"/shared_poll_publish": s.handleSharedPollPublish,
 	}
 }

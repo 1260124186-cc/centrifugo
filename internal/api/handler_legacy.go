@@ -301,6 +301,7 @@ const (
 	Command_MAP_STATS              CommandMethodType = 37
 	Command_MAP_CLEAR              CommandMethodType = 38
 	Command_SHARED_POLL_PUBLISH    CommandMethodType = 39
+	Command_MAP_RECONCILE          CommandMethodType = 40
 )
 
 var Command_MethodType_value = map[string]int32{
@@ -343,6 +344,7 @@ var Command_MethodType_value = map[string]int32{
 	"MAP_STATS":              37,
 	"MAP_CLEAR":              38,
 	"SHARED_POLL_PUBLISH":    39,
+	"MAP_RECONCILE":          40,
 }
 
 var (
@@ -386,6 +388,7 @@ var (
 		37: "MAP_STATS",
 		38: "MAP_CLEAR",
 		39: "SHARED_POLL_PUBLISH",
+		40: "MAP_RECONCILE",
 	}
 )
 
@@ -739,6 +742,24 @@ func (s *Handler) handleAPICommand(ctx context.Context, cmd *LegacyCommand) (*Le
 		} else {
 			if resp.Result != nil {
 				replyRes, err = encoder.EncodeMapClear(resp.Result)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	case Command_MAP_RECONCILE:
+		cmd, err := decoder.DecodeMapReconcile(params)
+		if err != nil {
+			log.Error().Err(err).Msg("error decoding map reconcile params")
+			rep.Error = apiproto.ErrorBadRequest
+			return rep, nil
+		}
+		resp := s.api.MapReconcile(ctx, cmd)
+		if resp.Error != nil {
+			rep.Error = resp.Error
+		} else {
+			if resp.Result != nil {
+				replyRes, err = encoder.EncodeMapReconcile(resp.Result)
 				if err != nil {
 					return nil, err
 				}

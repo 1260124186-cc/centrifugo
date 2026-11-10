@@ -973,6 +973,46 @@
         ]
       }
     },
+    "/map_reconcile": {
+      "post": {
+        "summary": "Reconcile a map channel with a complete managed entry manifest",
+        "operationId": "CentrifugoApi_MapReconcile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/MapReconcileResponse"
+            }
+          },
+          "400": {
+            "description": "Returned in case of invalid request.",
+            "schema": {}
+          },
+          "401": {
+            "description": "Returned in case of missing auth.",
+            "schema": {}
+          },
+          "500": {
+            "description": "Returned in case of internal server error.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "MapReconcileRequest applies the complete desired entry set of a map\nchannel for one manifest. Entries missing from the channel are created,\nentries whose data changed are updated, and entries previously managed by\nthe same manifest but absent from this request are deleted. Entries\nwritten manually or by another system (that is, entries not carrying this\nmanifest's ownership marker) are never modified or deleted; a desired key\ncolliding with such an entry makes the whole call fail with a conflict\nerror before anything is written.\n\nThe call is safe to retry and resumable: every entry is tagged with the\nrequest's idempotency_key as ownership marker, and each underlying\npublication or removal gets a deterministic per-entry idempotency key.\nRe-submitting the same request after an interruption only applies the\nstill-missing part, and the final state equals the submitted manifest.\nThe idempotency_key therefore identifies the manifest (not a single HTTP\nattempt) and must stay the same across resubmissions of this manifest.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MapReconcileRequest"
+            }
+          }
+        ],
+        "tags": [
+          "map"
+        ]
+      }
+    },
     "/map_remove": {
       "post": {
         "summary": "Remove a key from a map channel",
@@ -2085,6 +2125,10 @@
         "map_clear": {
           "$ref": "#/definitions/MapClearRequest",
           "description": "map_clear is a map clear command, see MapClearRequest."
+        },
+        "map_reconcile": {
+          "$ref": "#/definitions/MapReconcileRequest",
+          "description": "map_reconcile is a map reconcile command, see MapReconcileRequest."
         },
         "shared_poll_publish": {
           "$ref": "#/definitions/SharedPollPublishRequest",
@@ -3456,6 +3500,94 @@
       },
       "description": "MapReadStreamResult is the result of a map read stream call."
     },
+    "MapReconcileEntry": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "key is the entry key. Required, and must be unique within a single\nMapReconcileRequest."
+        },
+        "data": {
+          "type": "object",
+          "description": "data is the entry data. In the HTTP API it is any JSON value; over\nGRPC it may be binary."
+        },
+        "b64data": {
+          "type": "string",
+          "description": "b64data is data as base64, for binary payloads over the HTTP API.\nCentrifugo decodes it; when set it takes precedence over data."
+        }
+      },
+      "description": "MapReconcileEntry is one desired entry of a MapReconcileRequest."
+    },
+    "MapReconcileRequest": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "type": "string",
+          "description": "channel is the name of the map channel. Required."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "description": "idempotency_key identifies the manifest within the channel. Required.\nIt is stored as the ownership marker on every entry this call manages\nand scopes which absent entries may be deleted on later submissions.\nReuse the same value when re-submitting the same manifest, including\nretries after a process interruption."
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MapReconcileEntry"
+          },
+          "description": "entries is the complete desired entry set of the manifest. An empty\nlist removes all entries currently owned by this manifest and touches\nnothing else."
+        }
+      },
+      "description": "MapReconcileRequest applies the complete desired entry set of a map\nchannel for one manifest. Entries missing from the channel are created,\nentries whose data changed are updated, and entries previously managed by\nthe same manifest but absent from this request are deleted. Entries\nwritten manually or by another system (that is, entries not carrying this\nmanifest's ownership marker) are never modified or deleted; a desired key\ncolliding with such an entry makes the whole call fail with a conflict\nerror before anything is written.\n\nThe call is safe to retry and resumable: every entry is tagged with the\nrequest's idempotency_key as ownership marker, and each underlying\npublication or removal gets a deterministic per-entry idempotency key.\nRe-submitting the same request after an interruption only applies the\nstill-missing part, and the final state equals the submitted manifest.\nThe idempotency_key therefore identifies the manifest (not a single HTTP\nattempt) and must stay the same across resubmissions of this manifest."
+    },
+    "MapReconcileResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "$ref": "#/definitions/Error",
+          "description": "error is set if the call failed."
+        },
+        "result": {
+          "$ref": "#/definitions/MapReconcileResult",
+          "description": "result is set on success."
+        }
+      },
+      "description": "MapReconcileResponse is the response to a MapReconcileRequest."
+    },
+    "MapReconcileResult": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "integer",
+          "format": "int64",
+          "description": "created is the number of entries that did not exist and were created."
+        },
+        "updated": {
+          "type": "integer",
+          "format": "int64",
+          "description": "updated is the number of existing owned entries whose data changed."
+        },
+        "deleted": {
+          "type": "integer",
+          "format": "int64",
+          "description": "deleted is the number of entries owned by this manifest that were\nabsent from the submitted manifest."
+        },
+        "unchanged": {
+          "type": "integer",
+          "format": "int64",
+          "description": "unchanged is the number of submitted entries already matching the\ncurrent state."
+        },
+        "offset": {
+          "type": "integer",
+          "description": "offset is the stream position after the last applied operation, zero\nwhen nothing changed or the channel does not maintain a stream."
+        },
+        "epoch": {
+          "type": "string",
+          "description": "epoch is the epoch of the channel stream."
+        }
+      },
+      "description": "MapReconcileResult is the result of a map reconcile call. The counters\ndescribe what this application changed; an unchanged resubmission reports\nall zeros except unchanged."
+    },
     "MapRemoveRequest": {
       "type": "object",
       "properties": {
@@ -4219,6 +4351,10 @@
         "map_clear": {
           "$ref": "#/definitions/MapClearResult",
           "description": "map_clear is the result of a map clear command."
+        },
+        "map_reconcile": {
+          "$ref": "#/definitions/MapReconcileResult",
+          "description": "map_reconcile is the result of a map reconcile command."
         },
         "shared_poll_publish": {
           "$ref": "#/definitions/SharedPollPublishResult",

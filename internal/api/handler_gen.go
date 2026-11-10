@@ -838,6 +838,48 @@ func (s *Handler) handleMapClear(w http.ResponseWriter, r *http.Request) {
 	s.writeJson(w, data)
 }
 
+func (s *Handler) handleMapReconcile(w http.ResponseWriter, r *http.Request) {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "map_reconcile", "read_body")
+		s.handleReadDataError(r, w, err)
+		return
+	}
+
+	req, err := requestDecoder.DecodeMapReconcile(data)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "map_reconcile", "unmarshal")
+		s.handleUnmarshalError(r, w, err)
+		return
+	}
+
+	resp := s.api.MapReconcile(r.Context(), req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(r.Context())
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+
+	if resp.Error != nil && s.useTransportErrorMode(r) {
+		metrics.IncAPIError(s.api.config.Protocol, "map_reconcile", resp.Error.Code)
+		statusCode := MapErrorToHTTPCode(resp.Error)
+		data, _ = EncodeError(resp.Error)
+		s.writeJsonCustomStatus(w, statusCode, data)
+		return
+	}
+
+	data, err = responseEncoder.EncodeMapReconcile(resp)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "map_reconcile", "marshal")
+		s.handleMarshalError(r, w, err)
+		return
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "map_reconcile", resp.Error.Code)
+	}
+
+	s.writeJson(w, data)
+}
+
 func (s *Handler) handleSharedPollPublish(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
