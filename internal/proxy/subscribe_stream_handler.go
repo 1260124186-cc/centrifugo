@@ -11,6 +11,7 @@ import (
 	"github.com/centrifugal/centrifugo/v6/internal/configtypes"
 	"github.com/centrifugal/centrifugo/v6/internal/metrics"
 	"github.com/centrifugal/centrifugo/v6/internal/proxyproto"
+	"github.com/centrifugal/centrifugo/v6/internal/streamresume"
 	"github.com/centrifugal/centrifugo/v6/internal/subsource"
 
 	"github.com/centrifugal/centrifuge"
@@ -21,6 +22,10 @@ import (
 // SubscribeStreamHandlerConfig ...
 type SubscribeStreamHandlerConfig struct {
 	Proxies map[string]*SubscribeStreamProxy
+	// ResumeStore persists stream resume cursors. When nil, or when a
+	// namespace does not enable stream_resume, subscriptions behave exactly
+	// as without the feature.
+	ResumeStore streamresume.Store
 }
 
 // SubscribeStreamHandler ...
@@ -114,6 +119,29 @@ func (h *SubscribeStreamHandler) Handle() SubscribeStreamHandlerFunc {
 			req.Meta = proxyproto.Raw(pcd.Meta)
 		}
 
+		// A nil session keeps the historical behavior: publications are
+		// delivered as they arrive and no cursor is read or written.
+		var resumeSession *streamresume.Session
+		if chOpts.StreamResume && h.config.ResumeStore != nil {
+			session, sessionErr := streamresume.Start(client.Context(), h.config.ResumeStore, streamresume.Key{
+				UserID:    client.UserID(),
+				Channel:   e.Channel,
+				ProxyName: proxyName,
+			})
+			if sessionErr != nil {
+				// A cursor which cannot be read must not block the
+				// subscription: subscribe without resume and leave the stored
+				// cursor untouched.
+				log.Error().Err(sessionErr).Str("client", client.ID()).Str("channel", e.Channel).
+					Msg("error loading stream resume cursor, subscribing without resume")
+			} else {
+				resumeSession = session
+				if streamID, seq, ok := resumeSession.ResumeCursor(); ok {
+					req.Resume = &proxyproto.StreamResume{StreamId: streamID, Seq: seq}
+				}
+			}
+		}
+
 		subscriptionReady := make(chan struct{})
 		var subscriptionReadyOnce sync.Once
 
@@ -165,10 +193,7 @@ func (h *SubscribeStreamHandler) Handle() SubscribeStreamHandlerFunc {
 					})
 					return
 				}
-				_ = client.WritePublication(e.Channel, &centrifuge.Publication{
-					Data: pub.Data,
-					Tags: pub.Tags,
-				}, centrifuge.StreamPosition{})
+				writeAndTrackPublication(client, e.Channel, pub, resumeSession)
 				streamMu.Unlock()
 			},
 		)
@@ -212,6 +237,18 @@ func (h *SubscribeStreamHandler) Handle() SubscribeStreamHandlerFunc {
 				Code:    subscribeRep.Error.Code,
 				Message: subscribeRep.Error.Message,
 			}
+		}
+
+		if resumeSession != nil {
+			var streamID string
+			if subscribeRep.Result != nil {
+				streamID = subscribeRep.Result.StreamId
+			}
+			// A stream identity different from the stored cursor (or an
+			// empty one) makes the cursor unrecoverable: the session falls
+			// back to the plain subscription behavior without deleting the
+			// old cursor.
+			resumeSession.OnSubscribeResponse(streamID)
 		}
 
 		presence := chOpts.Presence
@@ -282,6 +319,53 @@ func (h *SubscribeStreamHandler) Handle() SubscribeStreamHandlerFunc {
 			streamMu.Unlock()
 			cancelFunc()
 		}, nil
+	}
+}
+
+// writeAndTrackPublication delivers one stream publication and, when a
+// resume session tracks the stream, drives the delivery cursor.
+//
+// Ordering is deliberately write-first, cursor-second: the cursor only
+// advances after the publication was written to the client and the new
+// cursor was persisted. A crash or a save error in between leaves the event
+// unconfirmed, so it is redelivered on the next subscription; a confirmed
+// event is never redelivered because Observe skips any sequence at or below
+// the stored cursor.
+func writeAndTrackPublication(client Client, channel string, pub *proxyproto.Publication, session *streamresume.Session) {
+	centrifugePub := &centrifuge.Publication{
+		Data: pub.Data,
+		Tags: pub.Tags,
+	}
+	if session == nil {
+		_ = client.WritePublication(channel, centrifugePub, centrifuge.StreamPosition{})
+		return
+	}
+
+	switch session.Observe(pub.Seq) {
+	case streamresume.DecisionSkip:
+		// The backend replayed a publication already confirmed delivered:
+		// do not write it again.
+		return
+	case streamresume.DecisionFallback:
+		// Resume was abandoned (sequence jump, reset, unsequenced stream or
+		// a cursor save failure): deliver without touching the cursor.
+		_ = client.WritePublication(channel, centrifugePub, centrifuge.StreamPosition{})
+		return
+	case streamresume.DecisionDeliver:
+	}
+
+	if err := client.WritePublication(channel, centrifugePub, centrifuge.StreamPosition{}); err != nil {
+		// The write failed: do not confirm. The event stays after the stored
+		// cursor and is redelivered on the next subscription.
+		log.Warn().Err(err).Str("client", client.ID()).Str("channel", channel).Uint64("seq", pub.Seq).
+			Msg("failed to write stream publication, leaving it unconfirmed")
+		return
+	}
+	if err := session.Confirmed(client.Context(), pub.Seq); err != nil {
+		// The store kept the previous cursor and the session fell back: the
+		// delivered event is redelivered after the next reconnect.
+		log.Error().Err(err).Str("client", client.ID()).Str("channel", channel).Uint64("seq", pub.Seq).
+			Msg("failed to persist stream resume cursor, resume disabled for this subscription")
 	}
 }
 

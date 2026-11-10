@@ -476,6 +476,21 @@ type Client struct {
 	// ConnectCodeToUnidirectionalDisconnect is a configuration for a feature to transform connect error codes to the disconnect code
 	// for unidirectional transports.
 	ConnectCodeToUnidirectionalDisconnect ConnectCodeToUnidirectionalDisconnect `mapstructure:"connect_code_to_unidirectional_disconnect" json:"connect_code_to_unidirectional_disconnect" envconfig:"connect_code_to_unidirectional_disconnect" yaml:"connect_code_to_unidirectional_disconnect" toml:"connect_code_to_unidirectional_disconnect" doc:"Configuration for mapping connect error codes to disconnect codes for unidirectional transports."`
+	// StreamResume configures the storage used by stream_resume on subscribe stream proxies.
+	StreamResume StreamResume `mapstructure:"stream_resume" json:"stream_resume" envconfig:"stream_resume" yaml:"stream_resume" toml:"stream_resume" doc:"Storage for subscribe stream proxy resume cursors. Only used by channels with stream_resume enabled."`
+}
+
+// StreamResume configures where delivery cursors of resumable subscribe
+// stream proxy subscriptions are persisted.
+type StreamResume struct {
+	// Storage selects the cursor storage implementation: <<memory>> (default,
+	// cursors are lost on process restart) or <<file>> (cursors survive
+	// restarts and can be shared over a mounted directory).
+	Storage string `mapstructure:"storage" json:"storage" envconfig:"storage" default:"memory" yaml:"storage" toml:"storage" expose:"full" doc:"Storage backend for stream resume cursors. One of <<memory>> (default) or <<file>>. File storage keeps cursors across process restarts."`
+	// FileDir is the directory holding cursor files when storage is <<file>>.
+	// Writes are atomic, so a crashed or interrupted save never corrupts the
+	// previous cursor.
+	FileDir string `mapstructure:"file_dir" json:"file_dir" envconfig:"file_dir" yaml:"file_dir" toml:"file_dir" expose:"full" doc:"Directory for stream resume cursor files. Required when storage is set to <<file>>."`
 }
 
 type UniConnectCodeToDisconnectTransforms []UniConnectCodeToDisconnectTransform

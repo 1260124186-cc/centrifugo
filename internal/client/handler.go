@@ -16,6 +16,7 @@ import (
 	"github.com/centrifugal/centrifugo/v6/internal/jwtverify"
 	"github.com/centrifugal/centrifugo/v6/internal/logging"
 	"github.com/centrifugal/centrifugo/v6/internal/proxy"
+	"github.com/centrifugal/centrifugo/v6/internal/streamresume"
 	"github.com/centrifugal/centrifugo/v6/internal/subsource"
 
 	"github.com/centrifugal/centrifuge"
@@ -90,18 +91,26 @@ func closeProxies[T any](proxies map[string]T, closeProxy func(p any)) {
 
 // Handler for client connections.
 type Handler struct {
-	node             *centrifuge.Node
-	cfgContainer     *config.Container
-	tokenVerifier    *jwtverify.VerifierJWT
-	subTokenVerifier *jwtverify.VerifierJWT
-	proxyMap         *ProxyMap
-	rpcExtension     map[string]RPCExtensionFunc
+	node              *centrifuge.Node
+	cfgContainer      *config.Container
+	tokenVerifier     *jwtverify.VerifierJWT
+	subTokenVerifier  *jwtverify.VerifierJWT
+	proxyMap          *ProxyMap
+	rpcExtension      map[string]RPCExtensionFunc
+	streamResumeStore streamresume.Store
 
 	trackSigMu              sync.RWMutex
 	trackSigVerifier        *trackSignatureVerifier
 	trackSigVerifierKey     string
 	trackSigPrevVerifier    *trackSignatureVerifier
 	trackSigPrevVerifierKey string
+}
+
+// SetStreamResumeStore provides the cursor store used by resumable subscribe
+// stream proxy subscriptions. It must be called before Setup. A nil store
+// keeps stream resume disabled even for channels with the option on.
+func (h *Handler) SetStreamResumeStore(store streamresume.Store) {
+	h.streamResumeStore = store
 }
 
 // NewHandler creates new Handler.
@@ -175,7 +184,8 @@ func (h *Handler) Setup() error {
 	var proxySubscribeStreamHandler proxy.SubscribeStreamHandlerFunc
 	if len(h.proxyMap.SubscribeStreamProxies) > 0 {
 		proxySubscribeStreamHandler = proxy.NewSubscribeStreamHandler(proxy.SubscribeStreamHandlerConfig{
-			Proxies: h.proxyMap.SubscribeStreamProxies,
+			Proxies:     h.proxyMap.SubscribeStreamProxies,
+			ResumeStore: h.streamResumeStore,
 		}).Handle()
 	}
 

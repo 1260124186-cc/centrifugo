@@ -303,6 +303,23 @@ message SubscribeRequest {
   // PRO only — connection labels attached to the originating centrifuge.Client.
   // Centrifugo PRO always populates this from Client.Labels() (no opt-in toggle).
   map<string, string> labels = 16;
+  // resume is set for a stream-resumable subscription which already has a
+  // stored delivery cursor: Centrifugo asks the backend to continue the
+  // identified stream after seq. It is empty on a first subscription. A
+  // backend which no longer has the stream or the events after seq opens a
+  // fresh stream and returns its own stream_id in SubscribeResult.
+  StreamResume resume = 17;
+}
+
+// StreamResume is the delivery cursor Centrifugo persisted for a previous
+// stream subscription, identified by user, channel and the backend's stream.
+message StreamResume {
+  // stream_id identifies the backend stream the cursor belongs to, as the
+  // backend returned it in SubscribeResult.stream_id when the stream opened.
+  string stream_id = 1;
+  // seq is the last sequence Centrifugo confirmed delivered to the client.
+  // The backend only has to send publications whose seq is greater than it.
+  uint64 seq = 2;
 }
 
 // BoolValue is a bool which can be left unset: an option it overrides keeps
@@ -357,6 +374,12 @@ message SubscribeResult {
   // server_tags_filter makes the subscription receive only publications
   // whose tags match it. Centrifugo PRO only.
   FilterNode server_tags_filter = 8;
+  // stream_id identifies the stream the backend opened for this
+  // subscription. It stays the same while the stream's publication sequence
+  // is continuous and changes when the backend resets the stream, which
+  // makes an earlier resume cursor unrecoverable. Empty means the backend
+  // does not identify its streams and stream resume stays disabled.
+  string stream_id = 9;
 }
 
 // SubscribeResponse answers a SubscribeRequest with one of its fields: result
@@ -658,6 +681,11 @@ message Publication {
   reserved 1, 2, 3, 5, 6;
   bytes data = 4;
   map<string, string> tags = 7;
+  // seq is the publication's sequence within the stream identified by
+  // SubscribeResult.stream_id. It must grow by one between consecutive
+  // publications of the stream; zero means the backend does not number
+  // publications, in which case Centrifugo delivers them without resume.
+  uint64 seq = 8;
 }
 
 message StreamSubscribeRequest {

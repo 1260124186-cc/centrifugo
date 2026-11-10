@@ -721,3 +721,60 @@ func TestValidateDuplicateProxyName(t *testing.T) {
 		require.EqualError(t, cfg.Validate(), "duplicate proxy name in proxies: first")
 	})
 }
+
+func TestValidateStreamResume(t *testing.T) {
+	t.Run("requires subscribe stream proxy", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Channel.WithoutNamespace.StreamResume = true
+		err := cfg.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "stream_resume requires subscribe_stream_proxy_enabled")
+	})
+
+	t.Run("valid with subscribe stream proxy and memory storage", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Channel.Proxy.SubscribeStream.Endpoint = "grpc://localhost:12000"
+		cfg.Channel.WithoutNamespace.SubscribeStreamProxyEnabled = true
+		cfg.Channel.WithoutNamespace.StreamResume = true
+		require.NoError(t, cfg.Validate())
+	})
+
+	t.Run("file storage requires a directory", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Client.StreamResume.Storage = "file"
+		err := cfg.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "file_dir is required")
+	})
+
+	t.Run("file storage with directory is valid", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Channel.Proxy.SubscribeStream.Endpoint = "grpc://localhost:12000"
+		cfg.Channel.WithoutNamespace.SubscribeStreamProxyEnabled = true
+		cfg.Channel.WithoutNamespace.StreamResume = true
+		cfg.Client.StreamResume.Storage = "file"
+		cfg.Client.StreamResume.FileDir = t.TempDir()
+		require.NoError(t, cfg.Validate())
+	})
+
+	t.Run("unknown storage rejected", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Client.StreamResume.Storage = "redis"
+		err := cfg.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unknown storage")
+	})
+
+	t.Run("rejected in namespace without subscribe stream proxy", func(t *testing.T) {
+		cfg := DefaultConfig()
+		cfg.Channel.Namespaces = []configtypes.ChannelNamespace{{
+			Name: "ns",
+			ChannelOptions: configtypes.ChannelOptions{
+				StreamResume: true,
+			},
+		}}
+		err := cfg.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "stream_resume requires subscribe_stream_proxy_enabled")
+	})
+}

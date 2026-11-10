@@ -210,6 +210,12 @@ type ChannelOptions struct {
 	SubscribeStreamProxyName string `mapstructure:"subscribe_stream_proxy_name" default:"default" json:"subscribe_stream_proxy_name" envconfig:"subscribe_stream_proxy_name" yaml:"subscribe_stream_proxy_name" toml:"subscribe_stream_proxy_name" expose:"full" doc:"Name of the configured proxy to use for subscribe stream in this namespace. Defaults to <<default>>."`
 	// SubscribeStreamBidirectional enables using bidirectional stream proxy for the namespace.
 	SubscribeStreamBidirectional bool `mapstructure:"subscribe_stream_proxy_bidirectional" json:"subscribe_stream_proxy_bidirectional" envconfig:"subscribe_stream_proxy_bidirectional" yaml:"subscribe_stream_proxy_bidirectional" toml:"subscribe_stream_proxy_bidirectional" doc:"Enables bidirectional mode for the subscribe stream proxy, letting clients also send data into the stream."`
+	// StreamResume turns on resumable subscribe stream proxy subscriptions: Centrifugo
+	// persists the last sequence confirmed delivered, keyed by user, channel and backend
+	// stream identity, and asks the proxy to continue after it on reconnect. Requires
+	// subscribe_stream_proxy_enabled and a backend which numbers publications and returns
+	// a stream identity.
+	StreamResume bool `mapstructure:"stream_resume" json:"stream_resume" envconfig:"stream_resume" yaml:"stream_resume" toml:"stream_resume" doc:"Persists the last delivered publication sequence of a subscribe stream proxy and resumes the stream after it on reconnect, instead of restarting it. Requires a subscribe stream proxy and a backend that numbers publications."`
 
 	// SubscriptionType defines the subscription type for the namespace.
 	// Valid values: "stream", "map", "map_clients", "map_users", "shared_poll".

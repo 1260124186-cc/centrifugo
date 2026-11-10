@@ -57,6 +57,16 @@ func (c Config) Validate() error {
 		return fmt.Errorf("in client.connect_code_to_unidirectional_disconnect: %v", err)
 	}
 
+	switch c.Client.StreamResume.Storage {
+	case "", "memory":
+	case "file":
+		if c.Client.StreamResume.FileDir == "" {
+			return errors.New("in client.stream_resume: file_dir is required when storage is \"file\"")
+		}
+	default:
+		return fmt.Errorf("in client.stream_resume: unknown storage %q, valid values are \"memory\" and \"file\"", c.Client.StreamResume.Storage)
+	}
+
 	var proxyNames []string
 	for _, p := range c.Proxies {
 		if slices.Contains(proxyNames, p.Name) {
@@ -259,6 +269,9 @@ func validateChannelOptions(c configtypes.ChannelOptions, globalHistoryMetaTTL c
 	}
 	if (c.SubscribeStreamProxyEnabled) && (c.SubscribeProxyEnabled || c.PublishProxyEnabled || c.SubRefreshProxyEnabled) {
 		return fmt.Errorf("can't use subscribe stream proxy together with subscribe, publish or sub refresh proxies")
+	}
+	if c.StreamResume && !c.SubscribeStreamProxyEnabled {
+		return errors.New("stream_resume requires subscribe_stream_proxy_enabled")
 	}
 	if len(c.AllowedDeltaTypes) > 0 {
 		for _, dt := range c.AllowedDeltaTypes {

@@ -511,6 +511,14 @@ func (a *App) setupHandlers() error {
 
 	a.clientHandler = client.NewHandler(node, cfgContainer, a.tokenVerifier, a.subTokenVerifier, a.proxyMap)
 
+	if streamResumeEnabled(cfg) {
+		store, err := newStreamResumeStore(cfg)
+		if err != nil {
+			return a.fatal(err, "error creating stream resume cursor store")
+		}
+		a.clientHandler.SetStreamResumeStore(store)
+	}
+
 	a.survey = survey.NewCaller(node)
 
 	useAPIOpentelemetry := cfg.OpenTelemetry.Enabled && cfg.OpenTelemetry.API
