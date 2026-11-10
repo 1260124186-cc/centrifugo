@@ -10,6 +10,7 @@ import (
 	. "github.com/centrifugal/centrifugo/v6/internal/apiproto"
 	"github.com/centrifugal/centrifugo/v6/internal/config"
 	"github.com/centrifugal/centrifugo/v6/internal/configtypes"
+	"github.com/centrifugal/centrifugo/v6/internal/historyrestore"
 	"github.com/centrifugal/centrifugo/v6/internal/metrics"
 	"github.com/centrifugal/centrifugo/v6/internal/subsource"
 
@@ -29,6 +30,10 @@ type Executor struct {
 	config       ExecutorConfig
 	rpcExtension map[string]RPCHandler
 	surveyCaller SurveyCaller
+	// restorer, when set, backs the history_snapshot and history_restore
+	// methods. Brokers without offset-preserving restore support leave it nil
+	// and the methods answer with ErrorNotAvailable.
+	restorer historyrestore.Broker
 }
 
 // SurveyCaller can do surveys.
@@ -56,6 +61,13 @@ func NewExecutor(n *centrifuge.Node, cfgContainer *config.Container, surveyCalle
 // SetRPCExtension ...
 func (h *Executor) SetRPCExtension(method string, handler RPCHandler) {
 	h.rpcExtension[method] = handler
+}
+
+// SetHistoryRestorer enables history_snapshot and history_restore on this
+// executor. The App calls it when the configured broker implements
+// historyrestore.Broker (e.g. the PostgreSQL stream broker).
+func (h *Executor) SetHistoryRestorer(restorer historyrestore.Broker) {
+	h.restorer = restorer
 }
 
 func (h *Executor) processCmd(ctx context.Context, cmd *Command, i int, replies []*Reply) {
@@ -96,6 +108,14 @@ func (h *Executor) processCmd(ctx context.Context, cmd *Command, i int, replies 
 		method = "history_remove"
 		res := h.HistoryRemove(ctx, cmd.HistoryRemove)
 		replies[i].HistoryRemove, replies[i].Error = res.Result, res.Error
+	} else if cmd.HistorySnapshot != nil {
+		method = "history_snapshot"
+		res := h.HistorySnapshot(ctx, cmd.HistorySnapshot)
+		replies[i].HistorySnapshot, replies[i].Error = res.Result, res.Error
+	} else if cmd.HistoryRestore != nil {
+		method = "history_restore"
+		res := h.HistoryRestore(ctx, cmd.HistoryRestore)
+		replies[i].HistoryRestore, replies[i].Error = res.Result, res.Error
 	} else if cmd.Presence != nil {
 		method = "presence"
 		res := h.Presence(ctx, cmd.Presence)

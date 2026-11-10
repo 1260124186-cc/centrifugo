@@ -49,6 +49,8 @@ OPERATIONS = {
     "PresenceStats": ("presence", "Presence stats information for a channel"),
     "History": ("history", "History for a channel"),
     "HistoryRemove": ("history", "Remove history for a channel"),
+    "HistorySnapshot": ("history", "Build a history recovery snapshot for a channel"),
+    "HistoryRestore": ("history", "Restore channel history from a recovery snapshot"),
     "Info": ("stats", "Info shows details about server nodes"),
     "RPC": ("rpc", "Execute RPC"),
     "Refresh": ("connection management", "Refresh connection(s) by server-side call"),

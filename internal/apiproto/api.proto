@@ -18,6 +18,8 @@ service CentrifugoApi {
     rpc PresenceStats (PresenceStatsRequest) returns (PresenceStatsResponse) {}
     rpc History (HistoryRequest) returns (HistoryResponse) {}
     rpc HistoryRemove (HistoryRemoveRequest) returns (HistoryRemoveResponse) {}
+    rpc HistorySnapshot (HistorySnapshotRequest) returns (HistorySnapshotResponse) {}
+    rpc HistoryRestore (HistoryRestoreRequest) returns (HistoryRestoreResponse) {}
     rpc Info (InfoRequest) returns (InfoResponse) {}
     rpc RPC (RPCRequest) returns (RPCResponse) {}
     rpc Refresh (RefreshRequest) returns (RefreshResponse) {}
@@ -154,6 +156,10 @@ message Command {
     // shared_poll_publish is a shared poll publish command, see
     // SharedPollPublishRequest.
     SharedPollPublishRequest shared_poll_publish = 42;
+    // history_snapshot is a history snapshot command, see HistorySnapshotRequest.
+    HistorySnapshotRequest history_snapshot = 43;
+    // history_restore is a history restore command, see HistoryRestoreRequest.
+    HistoryRestoreRequest history_restore = 44;
 }
 
 // Error is a Centrifugo API error. It has the same structure in every API
@@ -280,6 +286,10 @@ message Reply {
     MapClearResult map_clear = 41;
     // shared_poll_publish is the result of a shared poll publish command.
     SharedPollPublishResult shared_poll_publish = 42;
+    // history_snapshot is the result of a history snapshot command.
+    HistorySnapshotResult history_snapshot = 43;
+    // history_restore is the result of a history restore command.
+    HistoryRestoreResult history_restore = 44;
 }
 
 // BatchRequest sends many commands in one request, which avoids paying a
@@ -709,6 +719,108 @@ message HistoryRemoveResponse {
 // HistoryRemoveResult is the result of a history remove call. Empty at the
 // moment.
 message HistoryRemoveResult {}
+
+// SnapshotPublication is one publication captured in a history snapshot. It
+// keeps the original stream position so the publication can be restored
+// exactly where clients expect it.
+message SnapshotPublication {
+    // offset is the original offset of the publication in the channel stream.
+    uint64 offset = 1;
+    // epoch is the stream epoch the publication belonged to.
+    string epoch = 2;
+    // data is the publication payload. In the HTTP API it is any JSON value;
+    // over GRPC it may be binary.
+    bytes data = 3;
+    // b64data is a base64-encoded binary payload, an alternative to data used
+    // when restoring binary payloads over the HTTP API. Centrifugo decodes it
+    // before writing; when set, it takes precedence over data.
+    string b64data = 4;
+    // tags are the publication tags.
+    map<string, string> tags = 5;
+    // info is information about the client that published, if any.
+    ClientInfo info = 6;
+}
+
+// HistorySnapshotRequest builds a recovery package for a channel: every
+// publication still retained for its current epoch, with offsets, epochs,
+// payloads, tags and client info, plus a checksum covering the whole package.
+// History must be enabled for the channel.
+message HistorySnapshotRequest {
+    // channel is the name of the channel. Required.
+    string channel = 1;
+}
+
+// HistorySnapshotResponse is the response to a HistorySnapshotRequest.
+message HistorySnapshotResponse {
+    // error is set if the call failed.
+    Error error = 1;
+    // result is set on success.
+    HistorySnapshotResult result = 2;
+}
+
+// HistorySnapshotResult is a self-describing recovery package. Feed it back
+// unchanged into HistoryRestoreRequest.snapshot.
+message HistorySnapshotResult {
+    // version is the recovery package format version.
+    uint32 version = 1;
+    // channel is the channel the publications belong to.
+    string channel = 2;
+    // epoch is the stream epoch captured at snapshot time.
+    string epoch = 3;
+    // offset is the stream top offset captured at snapshot time.
+    uint64 offset = 4;
+    // created_at_ms is the snapshot creation time as Unix milliseconds.
+    int64 created_at_ms = 5;
+    // checksum is the lowercase hex SHA-256 of the package content. Restore
+    // rejects the package when the recomputed checksum differs.
+    string checksum = 6;
+    // publications are the captured publications, ordered by ascending offset.
+    repeated SnapshotPublication publications = 7;
+}
+
+// HistoryRestoreRequest restores the publications of a recovery package into
+// a channel. Publications already present with identical content are kept,
+// publications outside the package are never touched, and only missing ones
+// are inserted at their original offsets. The call is idempotent and
+// resumable: re-applying the same package never duplicates a message.
+message HistoryRestoreRequest {
+    // channel is the name of the channel to restore into. Required. It must
+    // match the channel stored in the package.
+    string channel = 1;
+    // snapshot is the recovery package produced by history_snapshot.
+    HistorySnapshotResult snapshot = 2;
+    // dry_run validates the package and runs every conflict check without
+    // writing anything.
+    bool dry_run = 3;
+}
+
+// HistoryRestoreResponse is the response to a HistoryRestoreRequest.
+message HistoryRestoreResponse {
+    // error is set if the call failed. On corruption, conflict or a write
+    // failure the whole restore is rolled back and the channel keeps its
+    // pre-restore state.
+    Error error = 1;
+    // result is set on success.
+    HistoryRestoreResult result = 2;
+}
+
+// HistoryRestoreResult reports what a restore did.
+message HistoryRestoreResult {
+    // total is the number of records carried by the package.
+    uint64 total = 1;
+    // inserted is the number of publications written by this call.
+    uint64 inserted = 2;
+    // already_present is the number of package records already stored with
+    // identical content. A repeated restore reports zero inserted once the
+    // stream is complete.
+    uint64 already_present = 3;
+    // offset is the stream top offset after the restore.
+    uint64 offset = 4;
+    // epoch is the stream epoch after the restore.
+    string epoch = 5;
+    // complete is true when every package record is present after the call.
+    bool complete = 6;
+}
 
 // InfoRequest returns information about the running Centrifugo nodes.
 message InfoRequest {}

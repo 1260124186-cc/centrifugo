@@ -12,6 +12,8 @@ type RequestDecoder interface {
 	DecodePresenceStats([]byte) (*PresenceStatsRequest, error)
 	DecodeHistory([]byte) (*HistoryRequest, error)
 	DecodeHistoryRemove([]byte) (*HistoryRemoveRequest, error)
+	DecodeHistorySnapshot([]byte) (*HistorySnapshotRequest, error)
+	DecodeHistoryRestore([]byte) (*HistoryRestoreRequest, error)
 	DecodeInfo([]byte) (*InfoRequest, error)
 	DecodeRPC([]byte) (*RPCRequest, error)
 	DecodeRefresh([]byte) (*RefreshRequest, error)

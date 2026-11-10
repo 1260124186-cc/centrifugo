@@ -61,6 +61,16 @@ func (e *JSONResponseEncoder) EncodeHistoryRemove(response *HistoryRemoveRespons
 	return json.Marshal(response)
 }
 
+// EncodeHistorySnapshot ...
+func (e *JSONResponseEncoder) EncodeHistorySnapshot(response *HistorySnapshotResponse) ([]byte, error) {
+	return json.Marshal(response)
+}
+
+// EncodeHistoryRestore ...
+func (e *JSONResponseEncoder) EncodeHistoryRestore(response *HistoryRestoreResponse) ([]byte, error) {
+	return json.Marshal(response)
+}
+
 // EncodeInfo ...
 func (e *JSONResponseEncoder) EncodeInfo(response *InfoResponse) ([]byte, error) {
 	return json.Marshal(response)

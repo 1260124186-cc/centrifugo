@@ -29,6 +29,8 @@ const (
 	CentrifugoApi_PresenceStats_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/PresenceStats"
 	CentrifugoApi_History_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/History"
 	CentrifugoApi_HistoryRemove_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/HistoryRemove"
+	CentrifugoApi_HistorySnapshot_FullMethodName      = "/centrifugal.centrifugo.api.CentrifugoApi/HistorySnapshot"
+	CentrifugoApi_HistoryRestore_FullMethodName       = "/centrifugal.centrifugo.api.CentrifugoApi/HistoryRestore"
 	CentrifugoApi_Info_FullMethodName                 = "/centrifugal.centrifugo.api.CentrifugoApi/Info"
 	CentrifugoApi_RPC_FullMethodName                  = "/centrifugal.centrifugo.api.CentrifugoApi/RPC"
 	CentrifugoApi_Refresh_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/Refresh"
@@ -79,6 +81,8 @@ type CentrifugoApiClient interface {
 	PresenceStats(ctx context.Context, in *PresenceStatsRequest, opts ...grpc.CallOption) (*PresenceStatsResponse, error)
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	HistoryRemove(ctx context.Context, in *HistoryRemoveRequest, opts ...grpc.CallOption) (*HistoryRemoveResponse, error)
+	HistorySnapshot(ctx context.Context, in *HistorySnapshotRequest, opts ...grpc.CallOption) (*HistorySnapshotResponse, error)
+	HistoryRestore(ctx context.Context, in *HistoryRestoreRequest, opts ...grpc.CallOption) (*HistoryRestoreResponse, error)
 	Info(ctx context.Context, in *InfoRequest, opts ...grpc.CallOption) (*InfoResponse, error)
 	RPC(ctx context.Context, in *RPCRequest, opts ...grpc.CallOption) (*RPCResponse, error)
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
@@ -213,6 +217,26 @@ func (c *centrifugoApiClient) HistoryRemove(ctx context.Context, in *HistoryRemo
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HistoryRemoveResponse)
 	err := c.cc.Invoke(ctx, CentrifugoApi_HistoryRemove_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *centrifugoApiClient) HistorySnapshot(ctx context.Context, in *HistorySnapshotRequest, opts ...grpc.CallOption) (*HistorySnapshotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HistorySnapshotResponse)
+	err := c.cc.Invoke(ctx, CentrifugoApi_HistorySnapshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *centrifugoApiClient) HistoryRestore(ctx context.Context, in *HistoryRestoreRequest, opts ...grpc.CallOption) (*HistoryRestoreResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HistoryRestoreResponse)
+	err := c.cc.Invoke(ctx, CentrifugoApi_HistoryRestore_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -537,6 +561,8 @@ type CentrifugoApiServer interface {
 	PresenceStats(context.Context, *PresenceStatsRequest) (*PresenceStatsResponse, error)
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 	HistoryRemove(context.Context, *HistoryRemoveRequest) (*HistoryRemoveResponse, error)
+	HistorySnapshot(context.Context, *HistorySnapshotRequest) (*HistorySnapshotResponse, error)
+	HistoryRestore(context.Context, *HistoryRestoreRequest) (*HistoryRestoreResponse, error)
 	Info(context.Context, *InfoRequest) (*InfoResponse, error)
 	RPC(context.Context, *RPCRequest) (*RPCResponse, error)
 	Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error)
@@ -606,6 +632,12 @@ func (UnimplementedCentrifugoApiServer) History(context.Context, *HistoryRequest
 }
 func (UnimplementedCentrifugoApiServer) HistoryRemove(context.Context, *HistoryRemoveRequest) (*HistoryRemoveResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HistoryRemove not implemented")
+}
+func (UnimplementedCentrifugoApiServer) HistorySnapshot(context.Context, *HistorySnapshotRequest) (*HistorySnapshotResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HistorySnapshot not implemented")
+}
+func (UnimplementedCentrifugoApiServer) HistoryRestore(context.Context, *HistoryRestoreRequest) (*HistoryRestoreResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HistoryRestore not implemented")
 }
 func (UnimplementedCentrifugoApiServer) Info(context.Context, *InfoRequest) (*InfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
@@ -894,6 +926,42 @@ func _CentrifugoApi_HistoryRemove_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CentrifugoApiServer).HistoryRemove(ctx, req.(*HistoryRemoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CentrifugoApi_HistorySnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HistorySnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CentrifugoApiServer).HistorySnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CentrifugoApi_HistorySnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CentrifugoApiServer).HistorySnapshot(ctx, req.(*HistorySnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CentrifugoApi_HistoryRestore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HistoryRestoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CentrifugoApiServer).HistoryRestore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CentrifugoApi_HistoryRestore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CentrifugoApiServer).HistoryRestore(ctx, req.(*HistoryRestoreRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1484,6 +1552,14 @@ var CentrifugoApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HistoryRemove",
 			Handler:    _CentrifugoApi_HistoryRemove_Handler,
+		},
+		{
+			MethodName: "HistorySnapshot",
+			Handler:    _CentrifugoApi_HistorySnapshot_Handler,
+		},
+		{
+			MethodName: "HistoryRestore",
+			Handler:    _CentrifugoApi_HistoryRestore_Handler,
 		},
 		{
 			MethodName: "Info",

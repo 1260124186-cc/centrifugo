@@ -9,6 +9,7 @@ import (
 	"github.com/centrifugal/centrifugo/v6/internal/confighelpers"
 	"github.com/centrifugal/centrifugo/v6/internal/configtypes"
 	"github.com/centrifugal/centrifugo/v6/internal/controllers"
+	"github.com/centrifugal/centrifugo/v6/internal/historyrestore"
 	"github.com/centrifugal/centrifugo/v6/internal/natsbroker"
 	"github.com/centrifugal/centrifugo/v6/internal/pgmapbroker"
 	"github.com/centrifugal/centrifugo/v6/internal/pgstreambroker"
@@ -162,6 +163,16 @@ func (a *App) configureEngines() error {
 		if controller != nil {
 			node.SetController(controller)
 		}
+	}
+
+	// Remember the broker when it supports offset-preserving history
+	// snapshots/restores, so the API executors can expose the capability.
+	// Brokers without it (memory, redis, nats) leave historyRestorer nil and
+	// the history_snapshot/history_restore API methods answer "not available".
+	if restorer, ok := broker.(historyrestore.Broker); ok {
+		a.historyRestorer = restorer
+	} else {
+		a.historyRestorer = nil
 	}
 
 	node.SetBroker(broker)

@@ -270,6 +270,8 @@ const (
 	Command_PRESENCE_STATS         CommandMethodType = 5
 	Command_HISTORY                CommandMethodType = 6
 	Command_HISTORY_REMOVE         CommandMethodType = 7
+	Command_HISTORY_SNAPSHOT       CommandMethodType = 40
+	Command_HISTORY_RESTORE        CommandMethodType = 41
 	Command_CHANNELS               CommandMethodType = 8
 	Command_INFO                   CommandMethodType = 9
 	Command_RPC                    CommandMethodType = 10
@@ -312,6 +314,8 @@ var Command_MethodType_value = map[string]int32{
 	"PRESENCE_STATS":         5,
 	"HISTORY":                6,
 	"HISTORY_REMOVE":         7,
+	"HISTORY_SNAPSHOT":       40,
+	"HISTORY_RESTORE":        41,
 	"CHANNELS":               8,
 	"INFO":                   9,
 	"RPC":                    10,
@@ -355,6 +359,8 @@ var (
 		5:  "PRESENCE_STATS",
 		6:  "HISTORY",
 		7:  "HISTORY_REMOVE",
+		40: "HISTORY_SNAPSHOT",
+		41: "HISTORY_RESTORE",
 		8:  "CHANNELS",
 		9:  "INFO",
 		10: "RPC",
@@ -564,6 +570,42 @@ func (s *Handler) handleAPICommand(ctx context.Context, cmd *LegacyCommand) (*Le
 		} else {
 			if resp.Result != nil {
 				replyRes, err = encoder.EncodeHistoryRemove(resp.Result)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	case Command_HISTORY_SNAPSHOT:
+		cmd, err := decoder.DecodeHistorySnapshot(params)
+		if err != nil {
+			log.Error().Err(err).Msg("error decoding history snapshot params")
+			rep.Error = apiproto.ErrorBadRequest
+			return rep, nil
+		}
+		resp := s.api.HistorySnapshot(ctx, cmd)
+		if resp.Error != nil {
+			rep.Error = resp.Error
+		} else {
+			if resp.Result != nil {
+				replyRes, err = encoder.EncodeHistorySnapshot(resp.Result)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	case Command_HISTORY_RESTORE:
+		cmd, err := decoder.DecodeHistoryRestore(params)
+		if err != nil {
+			log.Error().Err(err).Msg("error decoding history restore params")
+			rep.Error = apiproto.ErrorBadRequest
+			return rep, nil
+		}
+		resp := s.api.HistoryRestore(ctx, cmd)
+		if resp.Error != nil {
+			rep.Error = resp.Error
+		} else {
+			if resp.Result != nil {
+				replyRes, err = encoder.EncodeHistoryRestore(resp.Result)
 				if err != nil {
 					return nil, err
 				}

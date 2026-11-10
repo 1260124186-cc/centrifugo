@@ -11,6 +11,8 @@ var Requests = []string{
 	"PresenceStats",
 	"History",
 	"HistoryRemove",
+	"HistorySnapshot",
+	"HistoryRestore",
 	"Info",
 	"RPC",
 	"Refresh",

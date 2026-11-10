@@ -11,6 +11,8 @@ type ResultEncoder interface {
 	EncodePresenceStats(*PresenceStatsResult) ([]byte, error)
 	EncodeHistory(*HistoryResult) ([]byte, error)
 	EncodeHistoryRemove(*HistoryRemoveResult) ([]byte, error)
+	EncodeHistorySnapshot(*HistorySnapshotResult) ([]byte, error)
+	EncodeHistoryRestore(*HistoryRestoreResult) ([]byte, error)
 	EncodeInfo(*InfoResult) ([]byte, error)
 	EncodeRPC(*RPCResult) ([]byte, error)
 	EncodeRefresh(*RefreshResult) ([]byte, error)

@@ -190,6 +190,44 @@ func (s *grpcAPIService) HistoryRemove(ctx context.Context, req *HistoryRemoveRe
 	return resp, nil
 }
 
+// HistorySnapshot ...
+func (s *grpcAPIService) HistorySnapshot(ctx context.Context, req *HistorySnapshotRequest) (*HistorySnapshotResponse, error) {
+	resp := s.api.HistorySnapshot(ctx, req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+	if resp.Error != nil && s.useTransportErrorMode(ctx) {
+		metrics.IncAPIError(s.api.config.Protocol, "history_snapshot", resp.Error.Code)
+		statusCode := MapErrorToGRPCCode(resp.Error)
+		transportError, _ := status.New(statusCode, resp.Error.Message).WithDetails(resp.Error)
+		return nil, transportError.Err()
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "history_snapshot", resp.Error.Code)
+	}
+	return resp, nil
+}
+
+// HistoryRestore ...
+func (s *grpcAPIService) HistoryRestore(ctx context.Context, req *HistoryRestoreRequest) (*HistoryRestoreResponse, error) {
+	resp := s.api.HistoryRestore(ctx, req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+	if resp.Error != nil && s.useTransportErrorMode(ctx) {
+		metrics.IncAPIError(s.api.config.Protocol, "history_restore", resp.Error.Code)
+		statusCode := MapErrorToGRPCCode(resp.Error)
+		transportError, _ := status.New(statusCode, resp.Error.Message).WithDetails(resp.Error)
+		return nil, transportError.Err()
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "history_restore", resp.Error.Code)
+	}
+	return resp, nil
+}
+
 // Info ...
 func (s *grpcAPIService) Info(ctx context.Context, req *InfoRequest) (*InfoResponse, error) {
 	resp := s.api.Info(ctx, req)

@@ -1,0 +1,11 @@
+version: v2
+plugins:
+  - local: protoc-gen-openapiv2
+    out: internal/apiproto/swagger
+    opt:
+      - disable_default_errors=true
+      - disable_service_tags=true
+      - openapi_naming_strategy=simple
+      - json_names_for_fields=false
+      - allow_merge=true
+      - merge_file_name=api

@@ -114,6 +114,26 @@ func (d *JSONRequestDecoder) DecodeHistoryRemove(data []byte) (*HistoryRemoveReq
 	return &p, nil
 }
 
+// DecodeHistorySnapshot ...
+func (d *JSONRequestDecoder) DecodeHistorySnapshot(data []byte) (*HistorySnapshotRequest, error) {
+	var p HistorySnapshotRequest
+	err := json.Unmarshal(data, &p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// DecodeHistoryRestore ...
+func (d *JSONRequestDecoder) DecodeHistoryRestore(data []byte) (*HistoryRestoreRequest, error) {
+	var p HistoryRestoreRequest
+	err := json.Unmarshal(data, &p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
 // DecodeInfo ...
 func (d *JSONRequestDecoder) DecodeInfo(data []byte) (*InfoRequest, error) {
 	var p InfoRequest

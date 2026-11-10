@@ -20,6 +20,7 @@ import (
 	"github.com/centrifugal/centrifugo/v6/internal/config"
 	"github.com/centrifugal/centrifugo/v6/internal/confighelpers"
 	"github.com/centrifugal/centrifugo/v6/internal/consuming"
+	"github.com/centrifugal/centrifugo/v6/internal/historyrestore"
 	"github.com/centrifugal/centrifugo/v6/internal/jwtverify"
 	"github.com/centrifugal/centrifugo/v6/internal/logging"
 	"github.com/centrifugal/centrifugo/v6/internal/metrics"
@@ -76,6 +77,10 @@ type App struct {
 	grpcAPIExecutor      *api.Executor
 	consumingAPIExecutor *api.Executor
 	components           *Components
+	// historyRestorer backs the history_snapshot/history_restore API methods.
+	// Nil when the configured broker does not support offset-preserving
+	// restore (e.g. memory, redis, nats).
+	historyRestorer historyrestore.Broker
 
 	// Registered services will be run after node.Run() but before HTTP/GRPC servers start.
 	// Registered services will be stopped after node's shutdown and HTTP/GRPC servers shutdown.
@@ -528,6 +533,12 @@ func (a *App) setupHandlers() error {
 		Protocol:         "consuming",
 		UseOpenTelemetry: useConsumingOpentelemetry,
 	})
+	if a.historyRestorer != nil {
+		// Async consumers never run snapshot/restore; only the interactive
+		// HTTP and gRPC executors get the capability.
+		a.httpAPIExecutor.SetHistoryRestorer(a.historyRestorer)
+		a.grpcAPIExecutor.SetHistoryRestorer(a.historyRestorer)
+	}
 
 	a.components = &Components{
 		ConfigFile:        a.configFile,

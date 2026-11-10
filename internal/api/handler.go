@@ -50,6 +50,8 @@ func (s *Handler) Routes() map[string]http.HandlerFunc {
 		"/presence_stats":      s.handlePresenceStats,
 		"/history":             s.handleHistory,
 		"/history_remove":      s.handleHistoryRemove,
+		"/history_snapshot":    s.handleHistorySnapshot,
+		"/history_restore":     s.handleHistoryRestore,
 		"/info":                s.handleInfo,
 		"/rpc":                 s.handleRPC,
 		"/refresh":             s.handleRefresh,
