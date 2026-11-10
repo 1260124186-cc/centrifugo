@@ -223,3 +223,23 @@ func (d *JSONRequestDecoder) DecodeSharedPollPublish(data []byte) (*SharedPollPu
 	}
 	return &p, nil
 }
+
+// DecodeConsumerQuarantineList ...
+func (d *JSONRequestDecoder) DecodeConsumerQuarantineList(data []byte) (*ConsumerQuarantineListRequest, error) {
+	var p ConsumerQuarantineListRequest
+	err := json.Unmarshal(data, &p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// DecodeConsumerQuarantineReplay ...
+func (d *JSONRequestDecoder) DecodeConsumerQuarantineReplay(data []byte) (*ConsumerQuarantineReplayRequest, error) {
+	var p ConsumerQuarantineReplayRequest
+	err := json.Unmarshal(data, &p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}

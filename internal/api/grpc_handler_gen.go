@@ -398,3 +398,41 @@ func (s *grpcAPIService) SharedPollPublish(ctx context.Context, req *SharedPollP
 	}
 	return resp, nil
 }
+
+// ConsumerQuarantineList ...
+func (s *grpcAPIService) ConsumerQuarantineList(ctx context.Context, req *ConsumerQuarantineListRequest) (*ConsumerQuarantineListResponse, error) {
+	resp := s.api.ConsumerQuarantineList(ctx, req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+	if resp.Error != nil && s.useTransportErrorMode(ctx) {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_list", resp.Error.Code)
+		statusCode := MapErrorToGRPCCode(resp.Error)
+		transportError, _ := status.New(statusCode, resp.Error.Message).WithDetails(resp.Error)
+		return nil, transportError.Err()
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_list", resp.Error.Code)
+	}
+	return resp, nil
+}
+
+// ConsumerQuarantineReplay ...
+func (s *grpcAPIService) ConsumerQuarantineReplay(ctx context.Context, req *ConsumerQuarantineReplayRequest) (*ConsumerQuarantineReplayResponse, error) {
+	resp := s.api.ConsumerQuarantineReplay(ctx, req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+	if resp.Error != nil && s.useTransportErrorMode(ctx) {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_replay", resp.Error.Code)
+		statusCode := MapErrorToGRPCCode(resp.Error)
+		transportError, _ := status.New(statusCode, resp.Error.Message).WithDetails(resp.Error)
+		return nil, transportError.Err()
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_replay", resp.Error.Code)
+	}
+	return resp, nil
+}

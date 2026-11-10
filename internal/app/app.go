@@ -24,6 +24,7 @@ import (
 	"github.com/centrifugal/centrifugo/v6/internal/logging"
 	"github.com/centrifugal/centrifugo/v6/internal/metrics"
 	"github.com/centrifugal/centrifugo/v6/internal/notify"
+	"github.com/centrifugal/centrifugo/v6/internal/quarantine"
 	"github.com/centrifugal/centrifugo/v6/internal/service"
 	"github.com/centrifugal/centrifugo/v6/internal/survey"
 	"github.com/centrifugal/centrifugo/v6/internal/telemetry"
@@ -571,7 +572,19 @@ func (a *App) setupServices() error {
 		UseOpenTelemetry: useConsumingOpentelemetry,
 	})
 
-	consumers, err := consuming.New(node.ID(), consumingHandler, cfg.Consumers)
+	// The quarantine area keeps non-retryable failed consumer events
+	// (source, method and original payload) for inspection and replay via
+	// the consumer_quarantine_list and consumer_quarantine_replay API
+	// commands. The same dispatcher performs the replay, so replayed events
+	// go through the exact pipeline they originally used.
+	dispatcher := api.NewDispatcher(consumingHandler)
+	quarantineStore := quarantine.NewMemoryStore()
+	dispatcher.SetQuarantineStore(quarantineStore)
+	quarantineService := quarantine.NewService(quarantineStore, dispatcher)
+	a.httpAPIExecutor.SetQuarantineService(quarantineService)
+	a.grpcAPIExecutor.SetQuarantineService(quarantineService)
+
+	consumers, err := consuming.New(node.ID(), dispatcher, cfg.Consumers)
 	if err != nil {
 		return a.fatal(err, "error initializing consumers")
 	}

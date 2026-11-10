@@ -879,3 +879,87 @@ func (s *Handler) handleSharedPollPublish(w http.ResponseWriter, r *http.Request
 
 	s.writeJson(w, data)
 }
+
+func (s *Handler) handleConsumerQuarantineList(w http.ResponseWriter, r *http.Request) {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "consumer_quarantine_list", "read_body")
+		s.handleReadDataError(r, w, err)
+		return
+	}
+
+	req, err := requestDecoder.DecodeConsumerQuarantineList(data)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "consumer_quarantine_list", "unmarshal")
+		s.handleUnmarshalError(r, w, err)
+		return
+	}
+
+	resp := s.api.ConsumerQuarantineList(r.Context(), req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(r.Context())
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+
+	if resp.Error != nil && s.useTransportErrorMode(r) {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_list", resp.Error.Code)
+		statusCode := MapErrorToHTTPCode(resp.Error)
+		data, _ = EncodeError(resp.Error)
+		s.writeJsonCustomStatus(w, statusCode, data)
+		return
+	}
+
+	data, err = responseEncoder.EncodeConsumerQuarantineList(resp)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "consumer_quarantine_list", "marshal")
+		s.handleMarshalError(r, w, err)
+		return
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_list", resp.Error.Code)
+	}
+
+	s.writeJson(w, data)
+}
+
+func (s *Handler) handleConsumerQuarantineReplay(w http.ResponseWriter, r *http.Request) {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "consumer_quarantine_replay", "read_body")
+		s.handleReadDataError(r, w, err)
+		return
+	}
+
+	req, err := requestDecoder.DecodeConsumerQuarantineReplay(data)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "consumer_quarantine_replay", "unmarshal")
+		s.handleUnmarshalError(r, w, err)
+		return
+	}
+
+	resp := s.api.ConsumerQuarantineReplay(r.Context(), req)
+	if s.config.UseOpenTelemetry && resp.Error != nil {
+		span := trace.SpanFromContext(r.Context())
+		span.SetStatus(codes.Error, resp.Error.Error())
+	}
+
+	if resp.Error != nil && s.useTransportErrorMode(r) {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_replay", resp.Error.Code)
+		statusCode := MapErrorToHTTPCode(resp.Error)
+		data, _ = EncodeError(resp.Error)
+		s.writeJsonCustomStatus(w, statusCode, data)
+		return
+	}
+
+	data, err = responseEncoder.EncodeConsumerQuarantineReplay(resp)
+	if err != nil {
+		metrics.IncAPIErrorStringCode(s.api.config.Protocol, "consumer_quarantine_replay", "marshal")
+		s.handleMarshalError(r, w, err)
+		return
+	}
+	if resp.Error != nil {
+		metrics.IncAPIError(s.api.config.Protocol, "consumer_quarantine_replay", resp.Error.Code)
+	}
+
+	s.writeJson(w, data)
+}

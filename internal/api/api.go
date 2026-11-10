@@ -11,6 +11,7 @@ import (
 	"github.com/centrifugal/centrifugo/v6/internal/config"
 	"github.com/centrifugal/centrifugo/v6/internal/configtypes"
 	"github.com/centrifugal/centrifugo/v6/internal/metrics"
+	"github.com/centrifugal/centrifugo/v6/internal/quarantine"
 	"github.com/centrifugal/centrifugo/v6/internal/subsource"
 
 	"github.com/centrifugal/centrifuge"
@@ -29,6 +30,7 @@ type Executor struct {
 	config       ExecutorConfig
 	rpcExtension map[string]RPCHandler
 	surveyCaller SurveyCaller
+	quarantine   *quarantine.Service
 }
 
 // SurveyCaller can do surveys.
@@ -148,6 +150,14 @@ func (h *Executor) processCmd(ctx context.Context, cmd *Command, i int, replies 
 		method = "shared_poll_publish"
 		res := h.SharedPollPublish(ctx, cmd.SharedPollPublish)
 		replies[i].SharedPollPublish, replies[i].Error = res.Result, res.Error
+	} else if cmd.ConsumerQuarantineList != nil {
+		method = "consumer_quarantine_list"
+		res := h.ConsumerQuarantineList(ctx, cmd.ConsumerQuarantineList)
+		replies[i].ConsumerQuarantineList, replies[i].Error = res.Result, res.Error
+	} else if cmd.ConsumerQuarantineReplay != nil {
+		method = "consumer_quarantine_replay"
+		res := h.ConsumerQuarantineReplay(ctx, cmd.ConsumerQuarantineReplay)
+		replies[i].ConsumerQuarantineReplay, replies[i].Error = res.Result, res.Error
 	} else {
 		method = "unknown"
 		replies[i].Error = ErrorNotFound

@@ -36,8 +36,9 @@ var (
 
 // Consumer metrics - exported for use by consuming package
 var (
-	ConsumerProcessedTotal *prometheus.CounterVec
-	ConsumerErrorsTotal    *prometheus.CounterVec
+	ConsumerProcessedTotal  *prometheus.CounterVec
+	ConsumerErrorsTotal     *prometheus.CounterVec
+	ConsumerQuarantineTotal *prometheus.CounterVec
 )
 
 // Shared poll proxy metrics - exported for use by proxy package

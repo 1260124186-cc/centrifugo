@@ -115,3 +115,13 @@ func (e *JSONResponseEncoder) EncodeMapClear(response *MapClearResponse) ([]byte
 func (e *JSONResponseEncoder) EncodeSharedPollPublish(response *SharedPollPublishResponse) ([]byte, error) {
 	return json.Marshal(response)
 }
+
+// EncodeConsumerQuarantineList ...
+func (e *JSONResponseEncoder) EncodeConsumerQuarantineList(response *ConsumerQuarantineListResponse) ([]byte, error) {
+	return json.Marshal(response)
+}
+
+// EncodeConsumerQuarantineReplay ...
+func (e *JSONResponseEncoder) EncodeConsumerQuarantineReplay(response *ConsumerQuarantineReplayResponse) ([]byte, error) {
+	return json.Marshal(response)
+}

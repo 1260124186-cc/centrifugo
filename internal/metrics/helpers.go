@@ -37,4 +37,13 @@ func ObserveRPC(started time.Time, protocol string, method string) {
 func InitConsumerMetrics(consumerName string) {
 	ConsumerProcessedTotal.WithLabelValues(consumerName).Add(0)
 	ConsumerErrorsTotal.WithLabelValues(consumerName).Add(0)
+	ConsumerQuarantineTotal.WithLabelValues(consumerName, "quarantined").Add(0)
+	ConsumerQuarantineTotal.WithLabelValues(consumerName, "replayed").Add(0)
+	ConsumerQuarantineTotal.WithLabelValues(consumerName, "failed").Add(0)
+}
+
+// IncConsumerQuarantine increments the quarantine counter for consumerName and
+// result ("quarantined", "replayed" or "failed").
+func IncConsumerQuarantine(consumerName string, result string) {
+	ConsumerQuarantineTotal.WithLabelValues(consumerName, result).Inc()
 }

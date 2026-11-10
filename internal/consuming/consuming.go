@@ -36,11 +36,27 @@ type consumerCommon struct {
 	nodeID string
 }
 
+// sourceDispatcher wraps a Dispatcher and attaches the identity of a consumer
+// to every dispatch context, so failed events can be quarantined together
+// with their source.
+type sourceDispatcher struct {
+	inner  Dispatcher
+	source api.ConsumerSource
+}
+
+func (d *sourceDispatcher) DispatchCommand(ctx context.Context, method string, data []byte) error {
+	ctx = api.ContextWithConsumerSource(ctx, d.source)
+	return d.inner.DispatchCommand(ctx, method, data)
+}
+
+func (d *sourceDispatcher) DispatchPublication(ctx context.Context, channels []string, pub api.ConsumedPublication) error {
+	ctx = api.ContextWithConsumerSource(ctx, d.source)
+	return d.inner.DispatchPublication(ctx, channels, pub)
+}
+
 // New creates the enabled consumers. On error it closes the consumers it
 // already created.
-func New(nodeID string, consumingHandler *api.ConsumingHandler, configs []ConsumerConfig) ([]Consumer, error) {
-	dispatcher := api.NewDispatcher(consumingHandler)
-
+func New(nodeID string, dispatcher Dispatcher, configs []ConsumerConfig) ([]Consumer, error) {
 	var consumers []Consumer
 	closeConsumers := func() {
 		for _, c := range consumers {
@@ -60,25 +76,29 @@ func New(nodeID string, consumingHandler *api.ConsumingHandler, configs []Consum
 			log:    log.With().Str("consumer", config.Name).Logger(),
 			nodeID: nodeID,
 		}
+		consumerDispatcher := &sourceDispatcher{
+			inner:  dispatcher,
+			source: api.ConsumerSource{Name: config.Name, Type: config.Type},
+		}
 		// Initialize consumer metrics with zero values.
 		metrics.InitConsumerMetrics(config.Name)
 		var consumer Consumer
 		var err error
 		switch config.Type {
 		case configtypes.ConsumerTypePostgres:
-			consumer, err = NewPostgresConsumer(config.Postgres, dispatcher, common)
+			consumer, err = NewPostgresConsumer(config.Postgres, consumerDispatcher, common)
 		case configtypes.ConsumerTypeKafka:
-			consumer, err = NewKafkaConsumer(config.Kafka, dispatcher, common)
+			consumer, err = NewKafkaConsumer(config.Kafka, consumerDispatcher, common)
 		case configtypes.ConsumerTypeNatsJetStream:
-			consumer, err = NewNatsJetStreamConsumer(config.NatsJetStream, dispatcher, common)
+			consumer, err = NewNatsJetStreamConsumer(config.NatsJetStream, consumerDispatcher, common)
 		case configtypes.ConsumerTypeRedisStream:
-			consumer, err = NewRedisStreamConsumer(config.RedisStream, dispatcher, common)
+			consumer, err = NewRedisStreamConsumer(config.RedisStream, consumerDispatcher, common)
 		case configtypes.ConsumerTypeGooglePubSub:
-			consumer, err = NewGooglePubSubConsumer(config.GooglePubSub, dispatcher, common)
+			consumer, err = NewGooglePubSubConsumer(config.GooglePubSub, consumerDispatcher, common)
 		case configtypes.ConsumerTypeAwsSqs:
-			consumer, err = NewAwsSqsConsumer(config.AwsSqs, dispatcher, common)
+			consumer, err = NewAwsSqsConsumer(config.AwsSqs, consumerDispatcher, common)
 		case configtypes.ConsumerTypeAzureServiceBus:
-			consumer, err = NewAzureServiceBusConsumer(config.AzureServiceBus, dispatcher, common)
+			consumer, err = NewAzureServiceBusConsumer(config.AzureServiceBus, consumerDispatcher, common)
 		default:
 			closeConsumers()
 			return nil, fmt.Errorf("unknown consumer type: %s", config.Type)

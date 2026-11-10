@@ -19,46 +19,48 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CentrifugoApi_Batch_FullMethodName                = "/centrifugal.centrifugo.api.CentrifugoApi/Batch"
-	CentrifugoApi_Publish_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/Publish"
-	CentrifugoApi_Broadcast_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/Broadcast"
-	CentrifugoApi_Subscribe_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/Subscribe"
-	CentrifugoApi_Unsubscribe_FullMethodName          = "/centrifugal.centrifugo.api.CentrifugoApi/Unsubscribe"
-	CentrifugoApi_Disconnect_FullMethodName           = "/centrifugal.centrifugo.api.CentrifugoApi/Disconnect"
-	CentrifugoApi_Presence_FullMethodName             = "/centrifugal.centrifugo.api.CentrifugoApi/Presence"
-	CentrifugoApi_PresenceStats_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/PresenceStats"
-	CentrifugoApi_History_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/History"
-	CentrifugoApi_HistoryRemove_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/HistoryRemove"
-	CentrifugoApi_Info_FullMethodName                 = "/centrifugal.centrifugo.api.CentrifugoApi/Info"
-	CentrifugoApi_RPC_FullMethodName                  = "/centrifugal.centrifugo.api.CentrifugoApi/RPC"
-	CentrifugoApi_Refresh_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/Refresh"
-	CentrifugoApi_Channels_FullMethodName             = "/centrifugal.centrifugo.api.CentrifugoApi/Channels"
-	CentrifugoApi_Connections_FullMethodName          = "/centrifugal.centrifugo.api.CentrifugoApi/Connections"
-	CentrifugoApi_UpdateUserStatus_FullMethodName     = "/centrifugal.centrifugo.api.CentrifugoApi/UpdateUserStatus"
-	CentrifugoApi_GetUserStatus_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/GetUserStatus"
-	CentrifugoApi_DeleteUserStatus_FullMethodName     = "/centrifugal.centrifugo.api.CentrifugoApi/DeleteUserStatus"
-	CentrifugoApi_BlockUser_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/BlockUser"
-	CentrifugoApi_UnblockUser_FullMethodName          = "/centrifugal.centrifugo.api.CentrifugoApi/UnblockUser"
-	CentrifugoApi_RevokeToken_FullMethodName          = "/centrifugal.centrifugo.api.CentrifugoApi/RevokeToken"
-	CentrifugoApi_InvalidateUserTokens_FullMethodName = "/centrifugal.centrifugo.api.CentrifugoApi/InvalidateUserTokens"
-	CentrifugoApi_DeviceRegister_FullMethodName       = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceRegister"
-	CentrifugoApi_DeviceUpdate_FullMethodName         = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceUpdate"
-	CentrifugoApi_DeviceRemove_FullMethodName         = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceRemove"
-	CentrifugoApi_DeviceList_FullMethodName           = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceList"
-	CentrifugoApi_DeviceTopicList_FullMethodName      = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceTopicList"
-	CentrifugoApi_DeviceTopicUpdate_FullMethodName    = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceTopicUpdate"
-	CentrifugoApi_UserTopicList_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/UserTopicList"
-	CentrifugoApi_UserTopicUpdate_FullMethodName      = "/centrifugal.centrifugo.api.CentrifugoApi/UserTopicUpdate"
-	CentrifugoApi_SendPushNotification_FullMethodName = "/centrifugal.centrifugo.api.CentrifugoApi/SendPushNotification"
-	CentrifugoApi_UpdatePushStatus_FullMethodName     = "/centrifugal.centrifugo.api.CentrifugoApi/UpdatePushStatus"
-	CentrifugoApi_CancelPush_FullMethodName           = "/centrifugal.centrifugo.api.CentrifugoApi/CancelPush"
-	CentrifugoApi_MapPublish_FullMethodName           = "/centrifugal.centrifugo.api.CentrifugoApi/MapPublish"
-	CentrifugoApi_MapRemove_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/MapRemove"
-	CentrifugoApi_MapReadState_FullMethodName         = "/centrifugal.centrifugo.api.CentrifugoApi/MapReadState"
-	CentrifugoApi_MapReadStream_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/MapReadStream"
-	CentrifugoApi_MapStats_FullMethodName             = "/centrifugal.centrifugo.api.CentrifugoApi/MapStats"
-	CentrifugoApi_MapClear_FullMethodName             = "/centrifugal.centrifugo.api.CentrifugoApi/MapClear"
-	CentrifugoApi_SharedPollPublish_FullMethodName    = "/centrifugal.centrifugo.api.CentrifugoApi/SharedPollPublish"
+	CentrifugoApi_Batch_FullMethodName                    = "/centrifugal.centrifugo.api.CentrifugoApi/Batch"
+	CentrifugoApi_Publish_FullMethodName                  = "/centrifugal.centrifugo.api.CentrifugoApi/Publish"
+	CentrifugoApi_Broadcast_FullMethodName                = "/centrifugal.centrifugo.api.CentrifugoApi/Broadcast"
+	CentrifugoApi_Subscribe_FullMethodName                = "/centrifugal.centrifugo.api.CentrifugoApi/Subscribe"
+	CentrifugoApi_Unsubscribe_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/Unsubscribe"
+	CentrifugoApi_Disconnect_FullMethodName               = "/centrifugal.centrifugo.api.CentrifugoApi/Disconnect"
+	CentrifugoApi_Presence_FullMethodName                 = "/centrifugal.centrifugo.api.CentrifugoApi/Presence"
+	CentrifugoApi_PresenceStats_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/PresenceStats"
+	CentrifugoApi_History_FullMethodName                  = "/centrifugal.centrifugo.api.CentrifugoApi/History"
+	CentrifugoApi_HistoryRemove_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/HistoryRemove"
+	CentrifugoApi_Info_FullMethodName                     = "/centrifugal.centrifugo.api.CentrifugoApi/Info"
+	CentrifugoApi_RPC_FullMethodName                      = "/centrifugal.centrifugo.api.CentrifugoApi/RPC"
+	CentrifugoApi_Refresh_FullMethodName                  = "/centrifugal.centrifugo.api.CentrifugoApi/Refresh"
+	CentrifugoApi_Channels_FullMethodName                 = "/centrifugal.centrifugo.api.CentrifugoApi/Channels"
+	CentrifugoApi_Connections_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/Connections"
+	CentrifugoApi_UpdateUserStatus_FullMethodName         = "/centrifugal.centrifugo.api.CentrifugoApi/UpdateUserStatus"
+	CentrifugoApi_GetUserStatus_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/GetUserStatus"
+	CentrifugoApi_DeleteUserStatus_FullMethodName         = "/centrifugal.centrifugo.api.CentrifugoApi/DeleteUserStatus"
+	CentrifugoApi_BlockUser_FullMethodName                = "/centrifugal.centrifugo.api.CentrifugoApi/BlockUser"
+	CentrifugoApi_UnblockUser_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/UnblockUser"
+	CentrifugoApi_RevokeToken_FullMethodName              = "/centrifugal.centrifugo.api.CentrifugoApi/RevokeToken"
+	CentrifugoApi_InvalidateUserTokens_FullMethodName     = "/centrifugal.centrifugo.api.CentrifugoApi/InvalidateUserTokens"
+	CentrifugoApi_DeviceRegister_FullMethodName           = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceRegister"
+	CentrifugoApi_DeviceUpdate_FullMethodName             = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceUpdate"
+	CentrifugoApi_DeviceRemove_FullMethodName             = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceRemove"
+	CentrifugoApi_DeviceList_FullMethodName               = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceList"
+	CentrifugoApi_DeviceTopicList_FullMethodName          = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceTopicList"
+	CentrifugoApi_DeviceTopicUpdate_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/DeviceTopicUpdate"
+	CentrifugoApi_UserTopicList_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/UserTopicList"
+	CentrifugoApi_UserTopicUpdate_FullMethodName          = "/centrifugal.centrifugo.api.CentrifugoApi/UserTopicUpdate"
+	CentrifugoApi_SendPushNotification_FullMethodName     = "/centrifugal.centrifugo.api.CentrifugoApi/SendPushNotification"
+	CentrifugoApi_UpdatePushStatus_FullMethodName         = "/centrifugal.centrifugo.api.CentrifugoApi/UpdatePushStatus"
+	CentrifugoApi_CancelPush_FullMethodName               = "/centrifugal.centrifugo.api.CentrifugoApi/CancelPush"
+	CentrifugoApi_MapPublish_FullMethodName               = "/centrifugal.centrifugo.api.CentrifugoApi/MapPublish"
+	CentrifugoApi_MapRemove_FullMethodName                = "/centrifugal.centrifugo.api.CentrifugoApi/MapRemove"
+	CentrifugoApi_MapReadState_FullMethodName             = "/centrifugal.centrifugo.api.CentrifugoApi/MapReadState"
+	CentrifugoApi_MapReadStream_FullMethodName            = "/centrifugal.centrifugo.api.CentrifugoApi/MapReadStream"
+	CentrifugoApi_MapStats_FullMethodName                 = "/centrifugal.centrifugo.api.CentrifugoApi/MapStats"
+	CentrifugoApi_MapClear_FullMethodName                 = "/centrifugal.centrifugo.api.CentrifugoApi/MapClear"
+	CentrifugoApi_SharedPollPublish_FullMethodName        = "/centrifugal.centrifugo.api.CentrifugoApi/SharedPollPublish"
+	CentrifugoApi_ConsumerQuarantineList_FullMethodName   = "/centrifugal.centrifugo.api.CentrifugoApi/ConsumerQuarantineList"
+	CentrifugoApi_ConsumerQuarantineReplay_FullMethodName = "/centrifugal.centrifugo.api.CentrifugoApi/ConsumerQuarantineReplay"
 )
 
 // CentrifugoApiClient is the client API for CentrifugoApi service.
@@ -109,6 +111,8 @@ type CentrifugoApiClient interface {
 	MapStats(ctx context.Context, in *MapStatsRequest, opts ...grpc.CallOption) (*MapStatsResponse, error)
 	MapClear(ctx context.Context, in *MapClearRequest, opts ...grpc.CallOption) (*MapClearResponse, error)
 	SharedPollPublish(ctx context.Context, in *SharedPollPublishRequest, opts ...grpc.CallOption) (*SharedPollPublishResponse, error)
+	ConsumerQuarantineList(ctx context.Context, in *ConsumerQuarantineListRequest, opts ...grpc.CallOption) (*ConsumerQuarantineListResponse, error)
+	ConsumerQuarantineReplay(ctx context.Context, in *ConsumerQuarantineReplayRequest, opts ...grpc.CallOption) (*ConsumerQuarantineReplayResponse, error)
 }
 
 type centrifugoApiClient struct {
@@ -519,6 +523,26 @@ func (c *centrifugoApiClient) SharedPollPublish(ctx context.Context, in *SharedP
 	return out, nil
 }
 
+func (c *centrifugoApiClient) ConsumerQuarantineList(ctx context.Context, in *ConsumerQuarantineListRequest, opts ...grpc.CallOption) (*ConsumerQuarantineListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConsumerQuarantineListResponse)
+	err := c.cc.Invoke(ctx, CentrifugoApi_ConsumerQuarantineList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *centrifugoApiClient) ConsumerQuarantineReplay(ctx context.Context, in *ConsumerQuarantineReplayRequest, opts ...grpc.CallOption) (*ConsumerQuarantineReplayResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConsumerQuarantineReplayResponse)
+	err := c.cc.Invoke(ctx, CentrifugoApi_ConsumerQuarantineReplay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CentrifugoApiServer is the server API for CentrifugoApi service.
 // All implementations must embed UnimplementedCentrifugoApiServer
 // for forward compatibility.
@@ -567,6 +591,8 @@ type CentrifugoApiServer interface {
 	MapStats(context.Context, *MapStatsRequest) (*MapStatsResponse, error)
 	MapClear(context.Context, *MapClearRequest) (*MapClearResponse, error)
 	SharedPollPublish(context.Context, *SharedPollPublishRequest) (*SharedPollPublishResponse, error)
+	ConsumerQuarantineList(context.Context, *ConsumerQuarantineListRequest) (*ConsumerQuarantineListResponse, error)
+	ConsumerQuarantineReplay(context.Context, *ConsumerQuarantineReplayRequest) (*ConsumerQuarantineReplayResponse, error)
 	mustEmbedUnimplementedCentrifugoApiServer()
 }
 
@@ -696,6 +722,12 @@ func (UnimplementedCentrifugoApiServer) MapClear(context.Context, *MapClearReque
 }
 func (UnimplementedCentrifugoApiServer) SharedPollPublish(context.Context, *SharedPollPublishRequest) (*SharedPollPublishResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SharedPollPublish not implemented")
+}
+func (UnimplementedCentrifugoApiServer) ConsumerQuarantineList(context.Context, *ConsumerQuarantineListRequest) (*ConsumerQuarantineListResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConsumerQuarantineList not implemented")
+}
+func (UnimplementedCentrifugoApiServer) ConsumerQuarantineReplay(context.Context, *ConsumerQuarantineReplayRequest) (*ConsumerQuarantineReplayResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConsumerQuarantineReplay not implemented")
 }
 func (UnimplementedCentrifugoApiServer) mustEmbedUnimplementedCentrifugoApiServer() {}
 func (UnimplementedCentrifugoApiServer) testEmbeddedByValue()                       {}
@@ -1438,6 +1470,42 @@ func _CentrifugoApi_SharedPollPublish_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CentrifugoApi_ConsumerQuarantineList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConsumerQuarantineListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CentrifugoApiServer).ConsumerQuarantineList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CentrifugoApi_ConsumerQuarantineList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CentrifugoApiServer).ConsumerQuarantineList(ctx, req.(*ConsumerQuarantineListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CentrifugoApi_ConsumerQuarantineReplay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConsumerQuarantineReplayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CentrifugoApiServer).ConsumerQuarantineReplay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CentrifugoApi_ConsumerQuarantineReplay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CentrifugoApiServer).ConsumerQuarantineReplay(ctx, req.(*ConsumerQuarantineReplayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CentrifugoApi_ServiceDesc is the grpc.ServiceDesc for CentrifugoApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1604,6 +1672,14 @@ var CentrifugoApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SharedPollPublish",
 			Handler:    _CentrifugoApi_SharedPollPublish_Handler,
+		},
+		{
+			MethodName: "ConsumerQuarantineList",
+			Handler:    _CentrifugoApi_ConsumerQuarantineList_Handler,
+		},
+		{
+			MethodName: "ConsumerQuarantineReplay",
+			Handler:    _CentrifugoApi_ConsumerQuarantineReplay_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -22,4 +22,6 @@ var Requests = []string{
 	"MapStats",
 	"MapClear",
 	"SharedPollPublish",
+	"ConsumerQuarantineList",
+	"ConsumerQuarantineReplay",
 }

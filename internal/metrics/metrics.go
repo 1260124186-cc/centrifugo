@@ -89,8 +89,9 @@ type Registry struct {
 	rpcDurationHistogram *prometheus.HistogramVec
 
 	// Consumer metrics
-	consumerProcessedTotal *prometheus.CounterVec
-	consumerErrorsTotal    *prometheus.CounterVec
+	consumerProcessedTotal  *prometheus.CounterVec
+	consumerErrorsTotal     *prometheus.CounterVec
+	consumerQuarantineTotal *prometheus.CounterVec
 
 	// Shared poll proxy metrics
 	sharedPollProxyRequestItems  *prometheus.HistogramVec
@@ -140,6 +141,7 @@ func Init(cfg Config) error {
 
 	ConsumerProcessedTotal = reg.consumerProcessedTotal
 	ConsumerErrorsTotal = reg.consumerErrorsTotal
+	ConsumerQuarantineTotal = reg.consumerQuarantineTotal
 
 	SharedPollProxyRequestItems = reg.sharedPollProxyRequestItems
 	SharedPollProxyResponseItems = reg.sharedPollProxyResponseItems
@@ -281,6 +283,14 @@ func newRegistry(cfg Config) (*Registry, error) {
 		Help:        "Total number of errors in consumer",
 		ConstLabels: constLabels,
 	}, []string{"consumer_name"})
+
+	m.consumerQuarantineTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace:   metricsNamespace,
+		Subsystem:   "consumers",
+		Name:        "quarantine_total",
+		Help:        "Total number of consumer events moved to or replayed from the quarantine area, by result",
+		ConstLabels: constLabels,
+	}, []string{"consumer_name", "result"})
 
 	// Shared poll proxy metrics
 	m.sharedPollProxyRequestItems = prometheus.NewHistogramVec(nativeHistogramOpts(prometheus.HistogramOpts{

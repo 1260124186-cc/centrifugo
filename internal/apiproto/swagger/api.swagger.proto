@@ -59,6 +59,9 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     },
     {
       name: "shared poll"
+    },
+    {
+      name: "consumer quarantine"
     }
   ];
   responses: {
@@ -501,6 +504,26 @@ service CentrifugoApi {
       tags: ["shared poll"];
     };
   }
+  rpc ConsumerQuarantineList (ConsumerQuarantineListRequest) returns (ConsumerQuarantineListResponse) {
+    option (google.api.http) = {
+      post: "/consumer_quarantine_list",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List quarantined consumer events";
+      tags: ["consumer quarantine"];
+    };
+  }
+  rpc ConsumerQuarantineReplay (ConsumerQuarantineReplayRequest) returns (ConsumerQuarantineReplayResponse) {
+    option (google.api.http) = {
+      post: "/consumer_quarantine_replay",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Replay quarantined consumer events";
+      tags: ["consumer quarantine"];
+    };
+  }
 }
 
 // Command is a single command inside a BatchRequest. Set exactly one of its
@@ -607,6 +630,12 @@ message Command {
     // shared_poll_publish is a shared poll publish command, see
     // SharedPollPublishRequest.
     SharedPollPublishRequest shared_poll_publish = 42;
+    // consumer_quarantine_list is a command listing quarantined consumer
+    // events, see ConsumerQuarantineListRequest.
+    ConsumerQuarantineListRequest consumer_quarantine_list = 43;
+    // consumer_quarantine_replay is a command replaying quarantined consumer
+    // events, see ConsumerQuarantineReplayRequest.
+    ConsumerQuarantineReplayRequest consumer_quarantine_replay = 44;
 }
 
 // Error is a Centrifugo API error. It has the same structure in every API
@@ -733,6 +762,12 @@ message Reply {
     MapClearResult map_clear = 41;
     // shared_poll_publish is the result of a shared poll publish command.
     SharedPollPublishResult shared_poll_publish = 42;
+    // consumer_quarantine_list is the result of a consumer quarantine list
+    // command.
+    ConsumerQuarantineListResult consumer_quarantine_list = 43;
+    // consumer_quarantine_replay is the result of a consumer quarantine
+    // replay command.
+    ConsumerQuarantineReplayResult consumer_quarantine_replay = 44;
 }
 
 // BatchRequest sends many commands in one request, which avoids paying a
@@ -2498,3 +2533,111 @@ message SharedPollPublishResponse {
 // SharedPollPublishResult is the result of a shared poll publish call.
 // Empty at the moment.
 message SharedPollPublishResult {}
+
+// ConsumerQuarantineRecord is a failed consumer event kept in the quarantine
+// area, together with everything needed to re-dispatch it later.
+message ConsumerQuarantineRecord {
+    // id is the unique identifier of the quarantine record.
+    string id = 1;
+    // consumer is the name of the consumer the event came from.
+    string consumer = 2;
+    // consumer_type is the type of the consumer the event came from.
+    string consumer_type = 3;
+    // method is the API method carried by the event (publish, broadcast, ...).
+    string method = 4;
+    // payload is the original raw consumed payload, untouched.
+    bytes payload = 5;
+    // channels are the target channels for events consumed in publication
+    // data mode; empty for command mode events.
+    repeated string channels = 6;
+    // error is the last error observed for the event.
+    string error = 7;
+    // attempts is the number of replay attempts made for the event.
+    uint32 attempts = 8;
+    // status is the current lifecycle status: "quarantined" or "replaying".
+    string status = 9;
+    // created_at is the Unix time in milliseconds when the event was quarantined.
+    int64 created_at = 10;
+    // updated_at is the Unix time in milliseconds of the last modification.
+    int64 updated_at = 11;
+}
+
+// ConsumerQuarantineListRequest lists quarantined consumer events.
+message ConsumerQuarantineListRequest {
+    // consumer filters records by source consumer name. Empty returns records
+    // of every consumer.
+    string consumer = 1;
+    // method filters records by API method. Empty returns every method.
+    string method = 2;
+    // limit is the maximum number of records in a page. Defaults to 100 and
+    // is capped at 1000.
+    uint32 limit = 3;
+    // cursor is the next_cursor value returned by the previous page.
+    string cursor = 4;
+}
+
+// ConsumerQuarantineListResponse is the response to a
+// ConsumerQuarantineListRequest.
+message ConsumerQuarantineListResponse {
+    // error is set if the call failed.
+    Error error = 1;
+    // result is set on success.
+    ConsumerQuarantineListResult result = 2;
+}
+
+// ConsumerQuarantineListResult is the result of a consumer quarantine list call.
+message ConsumerQuarantineListResult {
+    // records is the page of quarantine records.
+    repeated ConsumerQuarantineRecord records = 1;
+    // next_cursor is the cursor to fetch the next page; empty on the last page.
+    string next_cursor = 2;
+    // has_more reports whether another page exists.
+    bool has_more = 3;
+}
+
+// ConsumerQuarantineReplayRequest re-dispatches quarantined consumer events.
+// A successful replay removes only the records it replayed; records which
+// still fail stay quarantined with their last error.
+message ConsumerQuarantineReplayRequest {
+    // ids selects the records to replay. When empty every currently
+    // quarantined record is replayed, optionally narrowed by consumer.
+    repeated string ids = 1;
+    // consumer narrows an empty-ids replay to the records of one consumer.
+    string consumer = 2;
+}
+
+// ConsumerQuarantineReplayResponse is the response to a
+// ConsumerQuarantineReplayRequest.
+message ConsumerQuarantineReplayResponse {
+    // error is set if the call failed, for example because a selected record
+    // is corrupted or its source cannot be determined. In that case the whole
+    // batch fails and no record is modified.
+    Error error = 1;
+    // result is set on success.
+    ConsumerQuarantineReplayResult result = 2;
+}
+
+// ConsumerQuarantineReplayItem is the outcome of replaying one record ID.
+message ConsumerQuarantineReplayItem {
+    // id is the quarantine record ID the item describes.
+    string id = 1;
+    // status is the outcome: "replayed", "failed" or "not_found". A
+    // not_found item means the record was already replayed successfully and
+    // removed, so nothing was dispatched for it.
+    string status = 2;
+    // error is the dispatch error when status is "failed".
+    string error = 3;
+}
+
+// ConsumerQuarantineReplayResult is the result of a consumer quarantine
+// replay call.
+message ConsumerQuarantineReplayResult {
+    // items is the per-record outcome, in the order of the request IDs.
+    repeated ConsumerQuarantineReplayItem items = 1;
+    // replayed is the number of records replayed successfully and removed.
+    uint32 replayed = 2;
+    // failed is the number of records whose replay failed and were kept.
+    uint32 failed = 3;
+    // not_found is the number of IDs without a quarantine record.
+    uint32 not_found = 4;
+}

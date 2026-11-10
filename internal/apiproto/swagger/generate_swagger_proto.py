@@ -35,6 +35,7 @@ TAGS = [
     "rpc",
     "map",
     "shared poll",
+    "consumer quarantine",
 ]
 
 # rpc name -> (tag, summary). HTTP path is /<snake_case rpc name>, see http_path.
@@ -79,6 +80,8 @@ OPERATIONS = {
     "MapStats": ("map", "Stats for a map channel"),
     "MapClear": ("map", "Clear a map channel"),
     "SharedPollPublish": ("shared poll", "Publish into a shared poll channel"),
+    "ConsumerQuarantineList": ("consumer quarantine", "List quarantined consumer events"),
+    "ConsumerQuarantineReplay": ("consumer quarantine", "Replay quarantined consumer events"),
 }
 
 HEADER = """import "google/api/annotations.proto";
