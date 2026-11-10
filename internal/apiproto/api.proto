@@ -48,6 +48,7 @@ service CentrifugoApi {
     rpc MapStats (MapStatsRequest) returns (MapStatsResponse) {}
     rpc MapClear (MapClearRequest) returns (MapClearResponse) {}
     rpc SharedPollPublish (SharedPollPublishRequest) returns (SharedPollPublishResponse) {}
+    rpc ConsumerCutover (ConsumerCutoverRequest) returns (ConsumerCutoverResponse) {}
 }
 
 // Command is a single command inside a BatchRequest. Set exactly one of its
@@ -154,6 +155,9 @@ message Command {
     // shared_poll_publish is a shared poll publish command, see
     // SharedPollPublishRequest.
     SharedPollPublishRequest shared_poll_publish = 42;
+    // consumer_cutover is a consumer cutover command, see
+    // ConsumerCutoverRequest.
+    ConsumerCutoverRequest consumer_cutover = 43;
 }
 
 // Error is a Centrifugo API error. It has the same structure in every API
